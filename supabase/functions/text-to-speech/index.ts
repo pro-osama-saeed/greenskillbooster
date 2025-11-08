@@ -58,10 +58,17 @@ serve(async (req) => {
     const audioData = await response.arrayBuffer();
     console.log('Audio generated, size:', audioData.byteLength);
 
-    // Return audio as base64
-    const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(audioData))
-    );
+    // Convert to base64 in chunks to avoid stack overflow
+    const uint8Array = new Uint8Array(audioData);
+    const chunkSize = 8192; // Process 8KB at a time
+    let binaryString = '';
+    
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+      binaryString += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    
+    const base64Audio = btoa(binaryString);
 
     return new Response(
       JSON.stringify({ audio: base64Audio }),
