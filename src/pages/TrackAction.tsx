@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Camera, Mic, Upload, Loader2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Header } from '@/components/Header';
+import { z } from 'zod';
 
 const ACTION_CATEGORIES = [
   { value: 'tree_planting', label: '🌳 Tree Planting' },
@@ -23,6 +24,19 @@ const ACTION_CATEGORIES = [
   { value: 'transportation', label: '🚲 Transportation' },
   { value: 'other', label: '🌍 Other' }
 ];
+
+// File validation constants
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_AUDIO_SIZE = 10 * 1024 * 1024; // 10MB for audio
+
+// Validation schema
+const actionSchema = z.object({
+  category: z.enum(['tree_planting', 'water_saving', 'energy_conservation', 'teaching', 'recycling', 'transportation', 'other'], {
+    errorMap: () => ({ message: 'Please select a valid action category' })
+  }),
+  story: z.string().trim().max(1000, 'Story must be less than 1000 characters').optional().or(z.literal('')),
+});
 
 export default function TrackAction() {
   const navigate = useNavigate();
@@ -49,6 +63,20 @@ export default function TrackAction() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error('Image too large. Maximum size is 5MB');
+        e.target.value = '';
+        return;
+      }
+
+      // Validate file type
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        toast.error('Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed');
+        e.target.value = '';
+        return;
+      }
+
       setPhoto(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -71,6 +99,13 @@ export default function TrackAction() {
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        
+        // Validate audio size
+        if (audioBlob.size > MAX_AUDIO_SIZE) {
+          toast.error('Audio recording too large. Maximum size is 10MB');
+          return;
+        }
+        
         setAudioBlob(audioBlob);
         stream.getTracks().forEach(track => track.stop());
       };
@@ -111,8 +146,32 @@ export default function TrackAction() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!category) {
-      toast.error('Please select an action category');
+    // Validate form inputs
+    const validation = actionSchema.safeParse({
+      category,
+      story,
+    });
+
+    if (!validation.success) {
+      toast.error(validation.error.errors[0].message);
+      return;
+    }
+
+    // Additional photo validation (belt and suspenders approach)
+    if (photo) {
+      if (photo.size > MAX_FILE_SIZE) {
+        toast.error('Image too large. Maximum size is 5MB');
+        return;
+      }
+      if (!ALLOWED_IMAGE_TYPES.includes(photo.type)) {
+        toast.error('Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed');
+        return;
+      }
+    }
+
+    // Additional audio validation
+    if (audioBlob && audioBlob.size > MAX_AUDIO_SIZE) {
+      toast.error('Audio recording too large. Maximum size is 10MB');
       return;
     }
 
@@ -216,7 +275,11 @@ export default function TrackAction() {
                   value={story}
                   onChange={(e) => setStory(e.target.value)}
                   rows={4}
+                  maxLength={1000}
                 />
+                <p className="text-xs text-muted-foreground">
+                  {story.length}/1000 characters
+                </p>
               </div>
 
               <div className="space-y-2">
