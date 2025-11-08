@@ -5,6 +5,7 @@ import { DroughtAlerts } from "@/components/DroughtAlerts";
 import { CropHealthDashboard } from "@/components/CropHealthDashboard";
 import { DidYouKnowBox } from "@/components/DidYouKnowBox";
 import { DisasterRiskBox } from "@/components/DisasterRiskBox";
+import { InteractiveMap } from "@/components/InteractiveMap";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const Dashboard = () => {
@@ -27,6 +28,9 @@ const Dashboard = () => {
 
           {/* Disaster Risk Alert - Full Width */}
           <DisasterRiskBox />
+
+          {/* Interactive Map - Full Width */}
+          <InteractiveMap />
 
           {/* Top Row - Weather and Air Quality */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
