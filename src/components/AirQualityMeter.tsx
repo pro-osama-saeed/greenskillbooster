@@ -3,6 +3,7 @@ import { Wind } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getAirQualityData, AirQualityData } from "@/services/asdiData";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLocation } from "@/contexts/LocationContext";
 
 const getAQIEmoji = (status: AirQualityData['status']) => {
   switch (status) {
@@ -34,11 +35,12 @@ const getAQIBackground = (status: AirQualityData['status']) => {
 export const AirQualityMeter = () => {
   const [airQuality, setAirQuality] = useState<AirQualityData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { location } = useLocation();
 
   useEffect(() => {
     const loadAirQuality = async () => {
       try {
-        const data = await getAirQualityData();
+        const data = await getAirQualityData(location || undefined);
         setAirQuality(data);
       } catch (error) {
         console.error("Failed to load air quality data:", error);
@@ -50,7 +52,7 @@ export const AirQualityMeter = () => {
     loadAirQuality();
     const interval = setInterval(loadAirQuality, 600000);
     return () => clearInterval(interval);
-  }, []);
+  }, [location]);
 
   if (loading) {
     return (

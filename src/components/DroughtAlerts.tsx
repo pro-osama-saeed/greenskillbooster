@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getDroughtData, DroughtData } from "@/services/asdiData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { useLocation } from "@/contexts/LocationContext";
 
 const getRiskColor = (risk: DroughtData['riskLevel']) => {
   switch (risk) {
@@ -26,11 +27,12 @@ const getRiskBackground = (risk: DroughtData['riskLevel']) => {
 export const DroughtAlerts = () => {
   const [drought, setDrought] = useState<DroughtData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { location } = useLocation();
 
   useEffect(() => {
     const loadDrought = async () => {
       try {
-        const data = await getDroughtData();
+        const data = await getDroughtData(location || undefined);
         setDrought(data);
       } catch (error) {
         console.error("Failed to load drought data:", error);
@@ -42,7 +44,7 @@ export const DroughtAlerts = () => {
     loadDrought();
     const interval = setInterval(loadDrought, 600000);
     return () => clearInterval(interval);
-  }, []);
+  }, [location]);
 
   if (loading) {
     return (

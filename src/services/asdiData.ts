@@ -35,10 +35,11 @@ export interface CropHealthData {
 }
 
 export interface DisasterAlert {
-  type: 'flood' | 'hurricane' | 'drought' | 'heatwave' | 'none';
+  type: 'flood' | 'hurricane' | 'drought' | 'heatwave' | 'wildfire' | 'none';
   severity: 'low' | 'moderate' | 'high';
   description: string;
   active: boolean;
+  location: string;
 }
 
 export interface DidYouKnowFact {
@@ -48,22 +49,42 @@ export interface DidYouKnowFact {
 }
 
 // Placeholder data - Replace with API calls to ASDI datasets
-export const getWeatherData = async (): Promise<WeatherData> => {
+interface LocationParams {
+  latitude?: number;
+  longitude?: number;
+  city?: string;
+  country?: string;
+}
+
+export const getWeatherData = async (location?: LocationParams): Promise<WeatherData> => {
   // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 500));
   
+  // Simulate weather variation based on latitude
+  const baseTemp = location?.latitude 
+    ? 30 - Math.abs(location.latitude) * 0.3 // Warmer near equator
+    : 26;
+  
+  const locationString = location?.city && location?.country
+    ? `${location.city}, ${location.country}`
+    : "Your Region";
+  
   return {
-    temperature: 26 + Math.random() * 6,
+    temperature: baseTemp + Math.random() * 6 - 3,
     rainfall: Math.random() * 50,
     windSpeed: 5 + Math.random() * 15,
     humidity: 55 + Math.random() * 30,
-    location: "Your Region",
+    location: locationString,
     timestamp: new Date().toISOString()
   };
 };
 
-export const getAirQualityData = async (): Promise<AirQualityData> => {
+export const getAirQualityData = async (location?: LocationParams): Promise<AirQualityData> => {
   await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const locationString = location?.city && location?.country
+    ? `${location.city}, ${location.country}`
+    : "Your Region";
   
   const pm25 = Math.random() * 150;
   const ozone = Math.random() * 100;
@@ -79,12 +100,16 @@ export const getAirQualityData = async (): Promise<AirQualityData> => {
     ozone,
     aqi: Math.round(aqi),
     status,
-    location: "Your Region"
+    location: locationString
   };
 };
 
-export const getDroughtData = async (): Promise<DroughtData> => {
+export const getDroughtData = async (location?: LocationParams): Promise<DroughtData> => {
   await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const locationString = location?.city && location?.country
+    ? `${location.city} Region`
+    : "Your Region";
   
   const waterStress = Math.random() * 100;
   let riskLevel: DroughtData['riskLevel'] = 'low';
@@ -97,12 +122,16 @@ export const getDroughtData = async (): Promise<DroughtData> => {
     waterStress,
     riverFlow: 50 + Math.random() * 200,
     rainfallDeficit: Math.random() * 60,
-    location: "Your Region"
+    location: locationString
   };
 };
 
-export const getCropHealthData = async (): Promise<CropHealthData> => {
+export const getCropHealthData = async (location?: LocationParams): Promise<CropHealthData> => {
   await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const locationString = location?.city && location?.country
+    ? `${location.city} Region`
+    : "Your Region";
   
   const ndvi = 0.3 + Math.random() * 0.6;
   const greenCover = ndvi * 100;
@@ -117,31 +146,52 @@ export const getCropHealthData = async (): Promise<CropHealthData> => {
     greenCover,
     season: "Growing Season",
     healthStatus,
-    location: "Your Region"
+    location: locationString
   };
 };
 
-export const getDisasterAlerts = async (): Promise<DisasterAlert> => {
+export const getDisasterAlerts = async (location?: LocationParams): Promise<DisasterAlert> => {
   await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const locationString = location?.city && location?.country
+    ? `${location.city} Region`
+    : "Your Region";
   
   const alerts: DisasterAlert[] = [
     {
       type: 'none',
       severity: 'low',
       description: 'No active alerts in your area',
-      active: false
+      active: false,
+      location: locationString
     },
     {
       type: 'heatwave',
       severity: 'moderate',
-      description: 'High temperatures expected this week',
-      active: true
+      description: 'High temperatures expected this week. Stay hydrated and avoid direct sunlight.',
+      active: true,
+      location: locationString
     },
     {
       type: 'drought',
       severity: 'high',
-      description: 'Low rainfall levels - conserve water',
-      active: true
+      description: 'Low rainfall levels detected. Please conserve water and follow local guidelines.',
+      active: true,
+      location: locationString
+    },
+    {
+      type: 'flood',
+      severity: 'high',
+      description: 'Heavy rainfall expected. Risk of flooding in low-lying areas.',
+      active: true,
+      location: locationString
+    },
+    {
+      type: 'wildfire',
+      severity: 'moderate',
+      description: 'Dry conditions increase wildfire risk. Be cautious with fire sources.',
+      active: true,
+      location: locationString
     }
   ];
   

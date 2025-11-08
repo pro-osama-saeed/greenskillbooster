@@ -1,7 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle, CloudRain, Wind, Droplets, Sun } from "lucide-react";
+import { AlertTriangle, CloudRain, Wind, Droplets, Sun, Flame } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getDisasterAlerts, DisasterAlert } from "@/services/asdiData";
+import { useLocation } from "@/contexts/LocationContext";
 
 const getAlertIcon = (type: DisasterAlert['type']) => {
   switch (type) {
@@ -9,6 +10,7 @@ const getAlertIcon = (type: DisasterAlert['type']) => {
     case 'hurricane': return Wind;
     case 'drought': return Droplets;
     case 'heatwave': return Sun;
+    case 'wildfire': return Flame;
     default: return AlertTriangle;
   }
 };
@@ -31,11 +33,12 @@ const getSeverityBackground = (severity: DisasterAlert['severity']) => {
 
 export const DisasterRiskBox = () => {
   const [alert, setAlert] = useState<DisasterAlert | null>(null);
+  const { location } = useLocation();
 
   useEffect(() => {
     const loadAlert = async () => {
       try {
-        const data = await getDisasterAlerts();
+        const data = await getDisasterAlerts(location || undefined);
         setAlert(data);
       } catch (error) {
         console.error("Failed to load disaster alerts:", error);
@@ -45,7 +48,7 @@ export const DisasterRiskBox = () => {
     loadAlert();
     const interval = setInterval(loadAlert, 300000); // Update every 5 minutes
     return () => clearInterval(interval);
-  }, []);
+  }, [location]);
 
   if (!alert || !alert.active) return null;
 
@@ -70,7 +73,7 @@ export const DisasterRiskBox = () => {
             <p className="text-sm text-foreground">{alert.description}</p>
             <div className="pt-2 border-t border-border">
               <p className="text-xs text-muted-foreground">
-                🚨 Live Alert • Powered by ASDI – Open AWS Data
+                📍 {alert.location} • 🚨 Live Alert • Powered by ASDI – Open AWS Data
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Source: NOAA Severe Weather Data

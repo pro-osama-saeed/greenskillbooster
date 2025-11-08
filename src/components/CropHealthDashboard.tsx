@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getCropHealthData, CropHealthData } from "@/services/asdiData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { useLocation } from "@/contexts/LocationContext";
 
 const getHealthColor = (status: CropHealthData['healthStatus']) => {
   switch (status) {
@@ -26,11 +27,12 @@ const getHealthBackground = (status: CropHealthData['healthStatus']) => {
 export const CropHealthDashboard = () => {
   const [cropHealth, setCropHealth] = useState<CropHealthData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { location } = useLocation();
 
   useEffect(() => {
     const loadCropHealth = async () => {
       try {
-        const data = await getCropHealthData();
+        const data = await getCropHealthData(location || undefined);
         setCropHealth(data);
       } catch (error) {
         console.error("Failed to load crop health data:", error);
@@ -42,7 +44,7 @@ export const CropHealthDashboard = () => {
     loadCropHealth();
     const interval = setInterval(loadCropHealth, 600000);
     return () => clearInterval(interval);
-  }, []);
+  }, [location]);
 
   if (loading) {
     return (

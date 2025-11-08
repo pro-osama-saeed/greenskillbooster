@@ -3,15 +3,17 @@ import { Cloud, Droplets, Wind, Thermometer } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getWeatherData, WeatherData } from "@/services/asdiData";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLocation } from "@/contexts/LocationContext";
 
 export const WeatherCard = () => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { location } = useLocation();
 
   useEffect(() => {
     const loadWeather = async () => {
       try {
-        const data = await getWeatherData();
+        const data = await getWeatherData(location || undefined);
         setWeather(data);
       } catch (error) {
         console.error("Failed to load weather data:", error);
@@ -24,7 +26,7 @@ export const WeatherCard = () => {
     // Refresh every 10 minutes
     const interval = setInterval(loadWeather, 600000);
     return () => clearInterval(interval);
-  }, []);
+  }, [location]);
 
   if (loading) {
     return (
