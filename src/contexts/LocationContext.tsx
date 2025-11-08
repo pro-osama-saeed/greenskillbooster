@@ -13,6 +13,7 @@ interface LocationContextType {
   loading: boolean;
   error: string | null;
   requestLocation: () => void;
+  updateLocation: (newLocation: LocationData) => void;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
@@ -106,6 +107,11 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  const updateLocation = (newLocation: LocationData) => {
+    setLocation(newLocation);
+    localStorage.setItem('userLocation', JSON.stringify(newLocation));
+  };
+
   useEffect(() => {
     // Try to load from localStorage first
     const savedLocation = localStorage.getItem('userLocation');
@@ -125,7 +131,7 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <LocationContext.Provider value={{ location, loading, error, requestLocation }}>
+    <LocationContext.Provider value={{ location, loading, error, requestLocation, updateLocation }}>
       {children}
     </LocationContext.Provider>
   );
