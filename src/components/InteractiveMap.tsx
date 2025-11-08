@@ -4,31 +4,32 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Map, Layers, Cloud, Droplets, Sprout, Info, Search, Loader2 } from 'lucide-react';
+import { Map, Layers, Cloud, Droplets, Sprout, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { supabase } from '@/integrations/supabase/client';
-import { useLocation } from '@/contexts/LocationContext';
-import { toast } from 'sonner';
 
 type MapLayer = 'satellite' | 'vegetation' | 'temperature' | 'rainfall';
+
+// Get Mapbox token from localStorage or use demo token
+const getMapboxToken = () => {
+  const stored = localStorage.getItem('mapbox_token');
+  // Demo token - replace with your own from https://mapbox.com
+  return stored || 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+};
 
 export const InteractiveMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const searchMarker = useRef<mapboxgl.Marker | null>(null);
   const [activeLayer, setActiveLayer] = useState<MapLayer>('satellite');
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [mapError, setMapError] = useState<string | null>('Loading map...');
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  const { updateLocation } = useLocation();
+  const [showTokenInput, setShowTokenInput] = useState(false);
+  const [tokenInput, setTokenInput] = useState('');
+  const [mapError, setMapError] = useState<string | null>(null);
 
-  const initializeMap = (token: string) => {
+  const initializeMap = () => {
     if (!mapContainer.current || map.current) return;
 
     try {
-      mapboxgl.accessToken = token;
+      mapboxgl.accessToken = getMapboxToken();
 
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
@@ -36,14 +37,6 @@ export const InteractiveMap = () => {
         center: [0, 20], // Center on global view
         zoom: 2,
         projection: 'globe' as any,
-      });
-
-      // Handle map errors
-      map.current.on('error', (e: any) => {
-        console.error('Map error:', e);
-        if (e.error && (e.error.status === 403 || e.error.status === 401)) {
-          setMapError('Invalid or expired Mapbox token. Please contact support.');
-        }
       });
 
       // Add navigation controls
@@ -68,7 +61,6 @@ export const InteractiveMap = () => {
         });
 
         setMapLoaded(true);
-        setMapError(null); // Clear error on successful load
       });
 
       // Add sample markers for key climate regions
@@ -107,40 +99,7 @@ export const InteractiveMap = () => {
   };
 
   useEffect(() => {
-    const fetchToken = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-        
-        if (error) {
-          console.error('Error fetching Mapbox token:', error);
-          setMapError(error.message || 'Failed to load map token. Please try again later.');
-          return;
-        }
-
-        if (data?.error) {
-          console.error('Token error:', data.error, data.message);
-          setMapError(data.message || 'Failed to configure map token.');
-          return;
-        }
-
-        if (data?.token) {
-          // Validate token format on client side too
-          if (!data.token.startsWith('pk.')) {
-            setMapError('Invalid Mapbox token format. Token must start with "pk."');
-            return;
-          }
-          setMapboxToken(data.token);
-          setMapError(null);
-        } else {
-          setMapError('Mapbox token not configured. Please contact support.');
-        }
-      } catch (error) {
-        console.error('Error fetching Mapbox token:', error);
-        setMapError('Failed to load map. Please try again later.');
-      }
-    };
-
-    fetchToken();
+    initializeMap();
 
     // Cleanup
     return () => {
@@ -149,12 +108,20 @@ export const InteractiveMap = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (mapboxToken && !map.current) {
-      initializeMap(mapboxToken);
+  const handleTokenSave = () => {
+    if (tokenInput.trim()) {
+      localStorage.setItem('mapbox_token', tokenInput.trim());
+      setShowTokenInput(false);
+      setTokenInput('');
+      setMapError(null);
+      // Reinitialize map with new token
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+      initializeMap();
     }
-  }, [mapboxToken]);
-
+  };
 
   const getMarkerColor = (type: string): string => {
     if (type.includes('Vegetation')) return '#22c55e';
@@ -179,127 +146,62 @@ export const InteractiveMap = () => {
     map.current.setStyle(styles[layer]);
   };
 
-  const handleLocationSearch = async () => {
-    if (!searchQuery.trim() || !map.current) return;
-
-    setIsSearching(true);
-
-    try {
-      // Use OpenStreetMap Nominatim for free geocoding
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`,
-        {
-          headers: {
-            'User-Agent': 'ClimateEducationApp/1.0'
-          }
-        }
-      );
-
-      const data = await response.json();
-
-      if (data && data.length > 0) {
-        const location = data[0];
-        const lat = parseFloat(location.lat);
-        const lon = parseFloat(location.lon);
-
-        // Fly to the location
-        map.current.flyTo({
-          center: [lon, lat],
-          zoom: 10,
-          duration: 2000,
-          essential: true
-        });
-
-        // Remove previous search marker if exists
-        if (searchMarker.current) {
-          searchMarker.current.remove();
-        }
-
-        // Add a marker at the searched location
-        searchMarker.current = new mapboxgl.Marker({
-          color: '#3b82f6',
-          scale: 1.2
-        })
-          .setLngLat([lon, lat])
-          .setPopup(
-            new mapboxgl.Popup({ offset: 25 }).setHTML(
-              `<div class="p-2">
-                <h3 class="font-bold text-sm">${location.display_name}</h3>
-                <p class="text-xs text-gray-600 mt-1">Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}</p>
-              </div>`
-            )
-          )
-          .addTo(map.current);
-
-        // Update location context to fetch climate data for this location
-        updateLocation({
-          latitude: lat,
-          longitude: lon,
-          city: location.address?.city || location.address?.town || location.address?.village || location.name,
-          country: location.address?.country || 'Unknown'
-        });
-
-        toast.success(`Location found: ${location.display_name}`);
-      } else {
-        toast.error('Location not found. Please try a different search term.');
-      }
-    } catch (error) {
-      console.error('Error searching location:', error);
-      toast.error('Failed to search location. Please try again.');
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
   return (
     <Card className="bg-gradient-card hover-lift border-primary/10">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Map className="h-5 w-5 text-primary" />
-          Interactive Climate Map
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Location Search Bar */}
-        <div className="flex gap-2">
-          <Input
-            type="text"
-            placeholder="Search for a city or address..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleLocationSearch();
-              }
-            }}
-            disabled={!mapLoaded || isSearching}
-            className="flex-1"
-          />
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Map className="h-5 w-5 text-primary" />
+            Interactive Climate Map
+          </CardTitle>
           <Button
-            onClick={handleLocationSearch}
-            disabled={!mapLoaded || isSearching || !searchQuery.trim()}
-            size="default"
+            size="sm"
+            variant="outline"
+            onClick={() => setShowTokenInput(!showTokenInput)}
             className="flex items-center gap-2"
           >
-            {isSearching ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Searching...
-              </>
-            ) : (
-              <>
-                <Search className="h-4 w-4" />
-                Search
-              </>
-            )}
+            <Info className="h-4 w-4" />
+            Setup
           </Button>
         </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Token Setup */}
+        {showTokenInput && (
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription className="space-y-3">
+              <p className="text-sm">
+                Get your free Mapbox token at{' '}
+                <a 
+                  href="https://mapbox.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  mapbox.com
+                </a>
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="pk.eyJ1..."
+                  value={tokenInput}
+                  onChange={(e) => setTokenInput(e.target.value)}
+                  className="flex-1"
+                />
+                <Button size="sm" onClick={handleTokenSave}>
+                  Save
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Error Message */}
         {mapError && (
-          <Alert variant={mapError.includes('Loading') ? 'default' : 'destructive'}>
-            <Info className="h-4 w-4" />
-            <AlertDescription className="text-sm">{mapError}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription>{mapError}</AlertDescription>
           </Alert>
         )}
 
