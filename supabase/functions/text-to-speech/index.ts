@@ -1,9 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_MINUTES = 15;
+const MAX_CALLS_PER_WINDOW = 10;
+const MAX_TEXT_LENGTH = 5000;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,10 +17,72 @@ serve(async (req) => {
   }
 
   try {
+    // Extract and validate JWT token
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Authentication required');
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false }
+    });
+
+    // Verify token and get user
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      throw new Error('Invalid authentication token');
+    }
+
     const { text, voiceId } = await req.json();
 
-    if (!text) {
-      throw new Error('Text is required');
+    // Input validation
+    if (!text || typeof text !== 'string') {
+      throw new Error('Text is required and must be a string');
+    }
+
+    if (text.trim().length === 0) {
+      throw new Error('Text cannot be empty');
+    }
+
+    if (text.length > MAX_TEXT_LENGTH) {
+      throw new Error(`Text exceeds maximum length of ${MAX_TEXT_LENGTH} characters`);
+    }
+
+    // Check rate limit
+    const rateLimitStart = new Date();
+    rateLimitStart.setMinutes(rateLimitStart.getMinutes() - RATE_LIMIT_WINDOW_MINUTES);
+
+    const { data: recentCalls, error: rateLimitError } = await supabase
+      .from('api_rate_limits')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('function_name', 'text-to-speech')
+      .gte('called_at', rateLimitStart.toISOString());
+
+    if (rateLimitError) {
+      console.error('Rate limit check error:', rateLimitError);
+      throw new Error('Rate limit check failed');
+    }
+
+    if (recentCalls && recentCalls.length >= MAX_CALLS_PER_WINDOW) {
+      throw new Error(`Rate limit exceeded. Maximum ${MAX_CALLS_PER_WINDOW} calls per ${RATE_LIMIT_WINDOW_MINUTES} minutes. Please try again later.`);
+    }
+
+    // Record this API call
+    const { error: insertError } = await supabase
+      .from('api_rate_limits')
+      .insert({
+        user_id: user.id,
+        function_name: 'text-to-speech'
+      });
+
+    if (insertError) {
+      console.error('Failed to record API call:', insertError);
+      // Don't fail the request if we can't record the call
     }
 
     const ELEVEN_LABS_API_KEY = Deno.env.get('ELEVEN_LABS_API_KEY');
@@ -51,7 +119,7 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('ElevenLabs API error:', response.status, errorText);
-      throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
+      throw new Error('Failed to generate audio. Please try again later.');
     }
 
     // Get audio data
@@ -78,10 +146,23 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in text-to-speech function:', error);
+    
+    // Return user-friendly error messages without exposing internal details
+    const userMessage = error instanceof Error && error.message.includes('Rate limit') 
+      ? error.message
+      : error instanceof Error && (error.message.includes('Authentication') || error.message.includes('Text'))
+      ? error.message
+      : 'Service temporarily unavailable. Please try again later.';
+    
+    const statusCode = error instanceof Error && error.message.includes('Authentication') ? 401 
+      : error instanceof Error && error.message.includes('Rate limit') ? 429
+      : error instanceof Error && (error.message.includes('Text') || error.message.includes('string')) ? 400
+      : 500;
+    
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: userMessage }),
       {
-        status: 500,
+        status: statusCode,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
