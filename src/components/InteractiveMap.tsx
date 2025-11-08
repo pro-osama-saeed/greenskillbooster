@@ -21,15 +21,26 @@ export const InteractiveMap = () => {
   const map = useRef<mapboxgl.Map | null>(null);
   const [activeLayer, setActiveLayer] = useState<MapLayer>('satellite');
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [showTokenInput, setShowTokenInput] = useState(false);
+  const [showTokenInput, setShowTokenInput] = useState(true); // Show by default
   const [tokenInput, setTokenInput] = useState('');
-  const [mapError, setMapError] = useState<string | null>(null);
+  const [mapError, setMapError] = useState<string | null>(
+    'Mapbox token required. Please enter your token to view the map.'
+  );
 
   const initializeMap = () => {
     if (!mapContainer.current || map.current) return;
 
+    const token = getMapboxToken();
+    
+    // Check if using demo token (which is likely expired)
+    if (token === 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw') {
+      setMapError('Demo token expired. Please enter your own Mapbox token to continue.');
+      setShowTokenInput(true);
+      return;
+    }
+
     try {
-      mapboxgl.accessToken = getMapboxToken();
+      mapboxgl.accessToken = token;
 
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
@@ -37,6 +48,15 @@ export const InteractiveMap = () => {
         center: [0, 20], // Center on global view
         zoom: 2,
         projection: 'globe' as any,
+      });
+
+      // Handle map errors
+      map.current.on('error', (e: any) => {
+        console.error('Map error:', e);
+        if (e.error && (e.error.status === 403 || e.error.status === 401)) {
+          setMapError('Invalid or expired Mapbox token. Please enter a valid token.');
+          setShowTokenInput(true);
+        }
       });
 
       // Add navigation controls
@@ -61,6 +81,7 @@ export const InteractiveMap = () => {
         });
 
         setMapLoaded(true);
+        setMapError(null); // Clear error on successful load
       });
 
       // Add sample markers for key climate regions
@@ -109,18 +130,32 @@ export const InteractiveMap = () => {
   }, []);
 
   const handleTokenSave = () => {
-    if (tokenInput.trim()) {
-      localStorage.setItem('mapbox_token', tokenInput.trim());
-      setShowTokenInput(false);
-      setTokenInput('');
-      setMapError(null);
-      // Reinitialize map with new token
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-      initializeMap();
+    const trimmedToken = tokenInput.trim();
+    if (!trimmedToken) {
+      setMapError('Please enter a valid Mapbox token.');
+      return;
     }
+    
+    if (!trimmedToken.startsWith('pk.')) {
+      setMapError('Invalid token format. Mapbox tokens start with "pk."');
+      return;
+    }
+
+    localStorage.setItem('mapbox_token', trimmedToken);
+    setShowTokenInput(false);
+    setTokenInput('');
+    setMapError('Loading map with your token...');
+    
+    // Reinitialize map with new token
+    if (map.current) {
+      map.current.remove();
+      map.current = null;
+    }
+    
+    // Small delay to ensure cleanup
+    setTimeout(() => {
+      initializeMap();
+    }, 100);
   };
 
   const getMarkerColor = (type: string): string => {
@@ -171,27 +206,43 @@ export const InteractiveMap = () => {
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription className="space-y-3">
-              <p className="text-sm">
-                Get your free Mapbox token at{' '}
-                <a 
-                  href="https://mapbox.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  mapbox.com
-                </a>
-              </p>
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">Setup Required</p>
+                <p className="text-sm">
+                  To display the interactive map, you need a free Mapbox token:
+                </p>
+                <ol className="text-sm space-y-1 list-decimal list-inside">
+                  <li>
+                    Visit{' '}
+                    <a 
+                      href="https://account.mapbox.com/access-tokens/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Mapbox Tokens
+                    </a>
+                  </li>
+                  <li>Create a free account or sign in</li>
+                  <li>Copy your "Default public token"</li>
+                  <li>Paste it below</li>
+                </ol>
+              </div>
               <div className="flex gap-2">
                 <Input
                   type="text"
-                  placeholder="pk.eyJ1..."
+                  placeholder="pk.eyJ1IjoieW91cnVzZXIiLCJhIjoiYWJjMTIzIn0..."
                   value={tokenInput}
                   onChange={(e) => setTokenInput(e.target.value)}
-                  className="flex-1"
+                  className="flex-1 font-mono text-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleTokenSave();
+                    }
+                  }}
                 />
                 <Button size="sm" onClick={handleTokenSave}>
-                  Save
+                  Save Token
                 </Button>
               </div>
             </AlertDescription>
@@ -199,9 +250,15 @@ export const InteractiveMap = () => {
         )}
 
         {/* Error Message */}
-        {mapError && (
-          <Alert variant="destructive">
-            <AlertDescription>{mapError}</AlertDescription>
+        {mapError && !mapError.includes('Loading') && (
+          <Alert variant={mapError.includes('required') || mapError.includes('expired') ? 'default' : 'destructive'}>
+            <AlertDescription className="text-sm">{mapError}</AlertDescription>
+          </Alert>
+        )}
+        
+        {mapError && mapError.includes('Loading') && (
+          <Alert>
+            <AlertDescription className="text-sm">{mapError}</AlertDescription>
           </Alert>
         )}
 
