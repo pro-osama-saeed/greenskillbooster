@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProgress } from "@/contexts/ProgressContext";
 import { lessons } from "@/data/lessons";
-import { CheckCircle2, Volume2, ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle2, Volume2, ArrowLeft, Loader2 } from "lucide-react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const LessonDetail = () => {
   const { id } = useParams();
@@ -18,6 +19,8 @@ const LessonDetail = () => {
   const [showQuiz, setShowQuiz] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const lesson = lessons.find((l) => l.id === id);
 
@@ -73,10 +76,60 @@ const LessonDetail = () => {
     }
   };
 
-  const handlePlayVoice = () => {
-    toast.info("Voice playback", {
-      description: "ElevenLabs integration placeholder - Add your API key to enable voice narration",
-    });
+  const handlePlayVoice = async () => {
+    if (!lesson) return;
+
+    try {
+      setIsPlayingAudio(true);
+      
+      // Call the text-to-speech edge function
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: {
+          text: lesson.content,
+          voiceId: 'EXAVITQu4vr4xnSDxMaL' // Sarah voice
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.audio) {
+        // Convert base64 to audio blob
+        const binaryString = atob(data.audio);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        // Play audio
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
+        
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        
+        audio.onended = () => {
+          setIsPlayingAudio(false);
+          URL.revokeObjectURL(audioUrl);
+        };
+        
+        audio.onerror = () => {
+          setIsPlayingAudio(false);
+          toast.error("Failed to play audio");
+        };
+
+        await audio.play();
+        toast.success("Playing lesson audio");
+      }
+    } catch (error) {
+      console.error('Error playing voice:', error);
+      setIsPlayingAudio(false);
+      toast.error("Failed to generate audio", {
+        description: error instanceof Error ? error.message : "Please try again",
+      });
+    }
   };
 
   if (showQuiz && lesson.quiz) {
@@ -152,9 +205,22 @@ const LessonDetail = () => {
 
           <CardContent className="space-y-8">
             <div className="flex gap-2">
-              <Button onClick={handlePlayVoice} variant="outline">
-                <Volume2 className="h-4 w-4 mr-2" />
-                {t("playVoice")}
+              <Button 
+                onClick={handlePlayVoice} 
+                variant="outline"
+                disabled={isPlayingAudio}
+              >
+                {isPlayingAudio ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Playing...
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="h-4 w-4 mr-2" />
+                    {t("playVoice")}
+                  </>
+                )}
               </Button>
             </div>
 

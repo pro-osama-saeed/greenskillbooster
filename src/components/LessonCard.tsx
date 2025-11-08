@@ -1,11 +1,14 @@
 import { Link } from "react-router-dom";
-import { Clock, Volume2, CheckCircle2 } from "lucide-react";
+import { Clock, Volume2, CheckCircle2, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Lesson } from "@/types/lesson";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProgress } from "@/contexts/ProgressContext";
+import { useState } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LessonCardProps {
   lesson: Lesson;
@@ -22,6 +25,50 @@ export const LessonCard = ({ lesson }: LessonCardProps) => {
   const { t } = useLanguage();
   const { progress } = useProgress();
   const isCompleted = progress.completedLessons.includes(lesson.id);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+
+  const handlePlayVoice = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    try {
+      setIsPlayingAudio(true);
+      
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: {
+          text: lesson.description,
+          voiceId: 'EXAVITQu4vr4xnSDxMaL'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.audio) {
+        const binaryString = atob(data.audio);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        const audio = new Audio(audioUrl);
+        audio.onended = () => {
+          setIsPlayingAudio(false);
+          URL.revokeObjectURL(audioUrl);
+        };
+        audio.onerror = () => {
+          setIsPlayingAudio(false);
+          toast.error("Failed to play audio");
+        };
+        await audio.play();
+        toast.success("Playing lesson preview");
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setIsPlayingAudio(false);
+      toast.error("Failed to play audio preview");
+    }
+  };
 
   return (
     <Card className="bg-gradient-card hover-lift border-primary/10">
@@ -53,8 +100,18 @@ export const LessonCard = ({ lesson }: LessonCardProps) => {
               {isCompleted ? t("startLesson") : t("startLesson")}
             </Button>
           </Link>
-          <Button variant="outline" size="icon" title={t("playVoice")}>
-            <Volume2 className="h-4 w-4" />
+          <Button 
+            variant="outline" 
+            size="icon" 
+            title={t("playVoice")}
+            onClick={handlePlayVoice}
+            disabled={isPlayingAudio}
+          >
+            {isPlayingAudio ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Volume2 className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </CardContent>
