@@ -23,6 +23,9 @@ export const Header = () => {
       <Link to="/lessons">
         <Button variant="ghost">{t("lessons")}</Button>
       </Link>
+      <Link to="/dashboard">
+        <Button variant="ghost">Dashboard</Button>
+      </Link>
       <Link to="/badges">
         <Button variant="ghost">{t("badges")}</Button>
       </Link>

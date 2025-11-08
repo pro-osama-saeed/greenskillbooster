@@ -9,6 +9,8 @@ import { CheckCircle2, Volume2, ArrowLeft, Loader2 } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { DidYouKnowBox } from "@/components/DidYouKnowBox";
+import { DisasterRiskBox } from "@/components/DisasterRiskBox";
 
 const LessonDetail = () => {
   const { id } = useParams();
@@ -242,7 +244,13 @@ const LessonDetail = () => {
               ))}
             </div>
 
-            <Button 
+            {/* Contextual ASDI Data Widgets */}
+            <div className="space-y-4 mt-8">
+              <DidYouKnowBox />
+              <DisasterRiskBox />
+            </div>
+
+            <Button
               onClick={handleComplete} 
               size="lg" 
               className="w-full"

@@ -5,9 +5,11 @@ import { Header } from "@/components/Header";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProgress } from "@/contexts/ProgressContext";
 import { ProgressBar } from "@/components/ProgressBar";
-import { Award, BookOpen, Flame } from "lucide-react";
+import { Award, BookOpen, Flame, Database } from "lucide-react";
 import heroImage from "@/assets/hero-climate.jpg";
 import { lessons } from "@/data/lessons";
+import { WeatherCard } from "@/components/WeatherCard";
+import { DidYouKnowBox } from "@/components/DidYouKnowBox";
 
 const Index = () => {
   const { t } = useLanguage();
@@ -35,12 +37,30 @@ const Index = () => {
             <p className="text-xl md:text-2xl text-primary-foreground/90">
               {t("tagline")}
             </p>
-            <Link to="/lessons">
-              <Button size="lg" variant="secondary" className="text-lg px-8">
-                {t("startLearning")}
-              </Button>
-            </Link>
+            <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto">
+              Learn climate skills with <strong>live environmental data</strong> from the Amazon Sustainability Data Initiative
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/lessons">
+                <Button size="lg" variant="secondary" className="text-lg px-8">
+                  {t("startLearning")}
+                </Button>
+              </Link>
+              <Link to="/dashboard">
+                <Button size="lg" variant="outline" className="text-lg px-8 bg-background/10 text-primary-foreground border-primary-foreground/30 hover:bg-background/20">
+                  <Database className="h-5 w-5 mr-2" />
+                  Live Data Dashboard
+                </Button>
+              </Link>
+            </div>
           </div>
+        </div>
+      </section>
+
+      {/* Live Weather Card */}
+      <section className="container py-8 bg-gradient-section -mt-12 relative z-20">
+        <div className="max-w-2xl mx-auto">
+          <WeatherCard />
         </div>
       </section>
 
@@ -92,6 +112,13 @@ const Index = () => {
 
       {/* Features Section */}
       <section className="container py-12 bg-gradient-section">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-foreground mb-3">Why GreenSkill Booster?</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Interactive learning powered by real climate data
+          </p>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="bg-gradient-card hover-lift border-primary/10">
             <CardContent className="p-6 text-center space-y-4">
@@ -128,6 +155,11 @@ const Index = () => {
               </p>
             </CardContent>
           </Card>
+        </div>
+        
+        {/* Did You Know Section */}
+        <div className="max-w-2xl mx-auto mt-8">
+          <DidYouKnowBox />
         </div>
       </section>
 
