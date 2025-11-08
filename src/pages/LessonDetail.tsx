@@ -1,0 +1,194 @@
+import { useParams, useNavigate } from "react-router-dom";
+import { Header } from "@/components/Header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useProgress } from "@/contexts/ProgressContext";
+import { lessons } from "@/data/lessons";
+import { CheckCircle2, Volume2, ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+
+const LessonDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { t } = useLanguage();
+  const { progress, completeLesson, updateStreak } = useProgress();
+  const [quizIndex, setQuizIndex] = useState(0);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [quizCompleted, setQuizCompleted] = useState(false);
+
+  const lesson = lessons.find((l) => l.id === id);
+
+  if (!lesson) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-8 text-center">
+          <h1 className="text-2xl font-bold">Lesson not found</h1>
+          <Button onClick={() => navigate("/lessons")} className="mt-4">
+            Back to Lessons
+              </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const isCompleted = progress.completedLessons.includes(lesson.id);
+
+  const handleComplete = () => {
+    if (lesson.quiz && !quizCompleted) {
+      setShowQuiz(true);
+      return;
+    }
+    
+    completeLesson(lesson.id);
+    updateStreak();
+    toast.success(t("congratulations"), {
+      description: "You've completed this lesson and earned 100 points!",
+    });
+    navigate("/badges");
+  };
+
+  const handleQuizAnswer = () => {
+    if (selectedAnswer === null) return;
+
+    const currentQuestion = lesson.quiz![quizIndex];
+    const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+
+    if (isCorrect) {
+      if (quizIndex < lesson.quiz!.length - 1) {
+        setQuizIndex(quizIndex + 1);
+        setSelectedAnswer(null);
+        toast.success("Correct!");
+      } else {
+        setQuizCompleted(true);
+        setShowQuiz(false);
+        toast.success("Quiz completed!");
+        handleComplete();
+      }
+    } else {
+      toast.error("Try again!");
+    }
+  };
+
+  const handlePlayVoice = () => {
+    toast.info("Voice playback", {
+      description: "ElevenLabs integration placeholder - Add your API key to enable voice narration",
+    });
+  };
+
+  if (showQuiz && lesson.quiz) {
+    const currentQuestion = lesson.quiz[quizIndex];
+    
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container py-8 max-w-3xl">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("quiz")}</CardTitle>
+              <p className="text-muted-foreground">
+                Question {quizIndex + 1} of {lesson.quiz.length}
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-xl font-semibold mb-4">{currentQuestion.question}</h3>
+                <div className="space-y-3">
+                  {currentQuestion.options.map((option, index) => (
+                    <Button
+                      key={index}
+                      variant={selectedAnswer === index ? "default" : "outline"}
+                      className="w-full justify-start text-left h-auto py-4"
+                      onClick={() => setSelectedAnswer(index)}
+                    >
+                      {option}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleQuizAnswer} 
+                disabled={selectedAnswer === null}
+                className="w-full"
+              >
+                {quizIndex < lesson.quiz.length - 1 ? t("nextQuestion") : t("finish")}
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="container py-8 max-w-4xl">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate("/lessons")}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Lessons
+        </Button>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <CardTitle className="text-3xl">{lesson.title}</CardTitle>
+                <p className="text-muted-foreground">{lesson.description}</p>
+              </div>
+              {isCompleted && (
+                <CheckCircle2 className="h-6 w-6 text-success flex-shrink-0" />
+              )}
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-8">
+            <div className="flex gap-2">
+              <Button onClick={handlePlayVoice} variant="outline">
+                <Volume2 className="h-4 w-4 mr-2" />
+                {t("playVoice")}
+              </Button>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold mb-4">{t("learningObjectives")}</h3>
+              <ul className="space-y-2">
+                {lesson.objectives.map((objective, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">{objective}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="prose prose-green dark:prose-invert max-w-none">
+              {lesson.content.split('\n\n').map((paragraph, index) => (
+                <p key={index} className="text-foreground">{paragraph}</p>
+              ))}
+            </div>
+
+            <Button 
+              onClick={handleComplete} 
+              size="lg" 
+              className="w-full"
+              disabled={isCompleted}
+            >
+              {isCompleted ? "Completed" : t("completeLesson")}
+            </Button>
+          </CardContent>
+        </Card>
+      </main>
+    </div>
+  );
+};
+
+export default LessonDetail;
