@@ -24,7 +24,7 @@ export const LessonCard = ({ lesson }: LessonCardProps) => {
   const isCompleted = progress.completedLessons.includes(lesson.id);
 
   return (
-    <Card className="hover:shadow-[var(--shadow-elevated)] transition-shadow">
+    <Card className="bg-gradient-card hover-lift border-primary/10">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="space-y-1">

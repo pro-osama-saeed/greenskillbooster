@@ -18,14 +18,16 @@ const Index = () => {
       <Header />
       
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[var(--gradient-hero)] opacity-90" />
+      <section className="relative overflow-hidden bg-gradient-hero">
+        <div className="absolute inset-0 bg-[var(--gradient-hero-overlay)]" />
         <img 
           src={heroImage} 
           alt="Climate education"
-          className="absolute inset-0 w-full h-full object-cover mix-blend-overlay"
+          className="absolute inset-0 w-full h-full object-cover mix-blend-soft-light opacity-60"
         />
-        <div className="container relative py-20 md:py-32">
+        {/* Animated gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/20 animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="container relative py-20 md:py-32 z-10">
           <div className="max-w-3xl mx-auto text-center space-y-6">
             <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground">
               {t("appName")}
@@ -44,8 +46,8 @@ const Index = () => {
 
       {/* Progress Overview */}
       {progress.completedLessons.length > 0 && (
-        <section className="container py-12">
-          <Card>
+        <section className="container py-12 bg-gradient-section">
+          <Card className="bg-gradient-card hover-lift border-primary/10">
             <CardContent className="p-6">
               <h2 className="text-2xl font-bold mb-6 text-foreground">{t("progress")}</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -89,9 +91,9 @@ const Index = () => {
       )}
 
       {/* Features Section */}
-      <section className="container py-12">
+      <section className="container py-12 bg-gradient-section">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="shadow-[var(--shadow-card)]">
+          <Card className="bg-gradient-card hover-lift border-primary/10">
             <CardContent className="p-6 text-center space-y-4">
               <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
                 <BookOpen className="h-8 w-8 text-primary" />
@@ -103,9 +105,9 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          <Card className="shadow-[var(--shadow-card)]">
+          <Card className="bg-gradient-card hover-lift border-primary/10">
             <CardContent className="p-6 text-center space-y-4">
-              <div className="w-16 h-16 mx-auto rounded-full bg-success/10 flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-success/20 to-success/10 flex items-center justify-center shadow-[var(--shadow-glow)]">
                 <Award className="h-8 w-8 text-success" />
               </div>
               <h3 className="font-bold text-xl text-foreground">Earn Badges</h3>
@@ -115,9 +117,9 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          <Card className="shadow-[var(--shadow-card)]">
+          <Card className="bg-gradient-card hover-lift border-primary/10">
             <CardContent className="p-6 text-center space-y-4">
-              <div className="w-16 h-16 mx-auto rounded-full bg-accent/10 flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto rounded-full bg-[var(--gradient-accent)] flex items-center justify-center shadow-[var(--shadow-glow)]">
                 <Flame className="h-8 w-8 text-accent" />
               </div>
               <h3 className="font-bold text-xl text-foreground">Stay Motivated</h3>
@@ -130,9 +132,10 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="container py-12 pb-20">
-        <Card className="bg-[var(--gradient-hero)] border-0">
-          <CardContent className="p-12 text-center space-y-4">
+      <section className="container py-12 pb-20 bg-gradient-section">
+        <Card className="bg-gradient-hero border-0 relative overflow-hidden shadow-[var(--shadow-elevated)]">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-transparent to-success/20 animate-pulse" style={{ animationDuration: '8s' }} />
+          <CardContent className="p-12 text-center space-y-4 relative z-10">
             <h2 className="text-3xl font-bold text-primary-foreground">
               Ready to Make a Difference?
             </h2>

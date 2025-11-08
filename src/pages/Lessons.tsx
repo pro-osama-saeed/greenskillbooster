@@ -19,7 +19,7 @@ const Lessons = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container py-8">
+      <main className="container py-8 bg-gradient-section">
         <div className="space-y-6">
           <div>
             <h1 className="text-4xl font-bold text-foreground mb-2">{t("lessons")}</h1>
