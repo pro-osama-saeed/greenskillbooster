@@ -132,17 +132,31 @@ export default function Community() {
         el.style.border = '2px solid white';
         el.style.cursor = 'pointer';
 
+        // Create popup content safely without XSS vulnerability
+        const popupContent = document.createElement('div');
+        popupContent.className = 'p-2';
+        
+        const username = document.createElement('p');
+        username.className = 'font-bold';
+        username.textContent = action.profiles.username;
+        
+        const category = document.createElement('p');
+        category.className = 'text-sm';
+        category.textContent = CATEGORY_LABELS[action.category];
+        
+        const location = document.createElement('p');
+        location.className = 'text-xs text-gray-500';
+        location.textContent = `${action.city}, ${action.country}`;
+        
+        popupContent.appendChild(username);
+        popupContent.appendChild(category);
+        popupContent.appendChild(location);
+
         new mapboxgl.Marker(el)
           .setLngLat([action.longitude, action.latitude])
           .setPopup(
             new mapboxgl.Popup({ offset: 25 })
-              .setHTML(
-                `<div class="p-2">
-                  <p class="font-bold">${action.profiles.username}</p>
-                  <p class="text-sm">${CATEGORY_LABELS[action.category]}</p>
-                  <p class="text-xs text-gray-500">${action.city}, ${action.country}</p>
-                </div>`
-              )
+              .setDOMContent(popupContent)
           )
           .addTo(map.current);
       }
