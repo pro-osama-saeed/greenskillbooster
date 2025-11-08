@@ -3,33 +3,47 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Map, Layers, Cloud, Droplets, Sprout, Info } from 'lucide-react';
+import { Map, Layers, Cloud, Droplets, Sprout } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
 
 type MapLayer = 'satellite' | 'vegetation' | 'temperature' | 'rainfall';
-
-// Get Mapbox token from localStorage or use demo token
-const getMapboxToken = () => {
-  const stored = localStorage.getItem('mapbox_token');
-  // Demo token - replace with your own from https://mapbox.com
-  return stored || 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
-};
 
 export const InteractiveMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [activeLayer, setActiveLayer] = useState<MapLayer>('satellite');
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [showTokenInput, setShowTokenInput] = useState(false);
-  const [tokenInput, setTokenInput] = useState('');
   const [mapError, setMapError] = useState<string | null>(null);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+
+  // Fetch Mapbox token from backend
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        
+        if (error) throw error;
+        
+        if (data?.token) {
+          setMapboxToken(data.token);
+        } else {
+          setMapError('Failed to load map token from backend');
+        }
+      } catch (error) {
+        console.error('Error fetching Mapbox token:', error);
+        setMapError('Failed to load map configuration');
+      }
+    };
+
+    fetchToken();
+  }, []);
 
   const initializeMap = () => {
-    if (!mapContainer.current || map.current) return;
+    if (!mapContainer.current || map.current || !mapboxToken) return;
 
     try {
-      mapboxgl.accessToken = getMapboxToken();
+      mapboxgl.accessToken = mapboxToken;
 
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
@@ -99,29 +113,16 @@ export const InteractiveMap = () => {
   };
 
   useEffect(() => {
-    initializeMap();
+    if (mapboxToken) {
+      initializeMap();
+    }
 
     // Cleanup
     return () => {
       map.current?.remove();
       map.current = null;
     };
-  }, []);
-
-  const handleTokenSave = () => {
-    if (tokenInput.trim()) {
-      localStorage.setItem('mapbox_token', tokenInput.trim());
-      setShowTokenInput(false);
-      setTokenInput('');
-      setMapError(null);
-      // Reinitialize map with new token
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-      initializeMap();
-    }
-  };
+  }, [mapboxToken]);
 
   const getMarkerColor = (type: string): string => {
     if (type.includes('Vegetation')) return '#22c55e';
@@ -149,59 +150,23 @@ export const InteractiveMap = () => {
   return (
     <Card className="bg-gradient-card hover-lift border-primary/10">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Map className="h-5 w-5 text-primary" />
-            Interactive Climate Map
-          </CardTitle>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setShowTokenInput(!showTokenInput)}
-            className="flex items-center gap-2"
-          >
-            <Info className="h-4 w-4" />
-            Setup
-          </Button>
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <Map className="h-5 w-5 text-primary" />
+          Interactive Climate Map
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Token Setup */}
-        {showTokenInput && (
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription className="space-y-3">
-              <p className="text-sm">
-                Get your free Mapbox token at{' '}
-                <a 
-                  href="https://mapbox.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  mapbox.com
-                </a>
-              </p>
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  placeholder="pk.eyJ1..."
-                  value={tokenInput}
-                  onChange={(e) => setTokenInput(e.target.value)}
-                  className="flex-1"
-                />
-                <Button size="sm" onClick={handleTokenSave}>
-                  Save
-                </Button>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
-
         {/* Error Message */}
         {mapError && (
           <Alert variant="destructive">
             <AlertDescription>{mapError}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Loading State */}
+        {!mapboxToken && !mapError && (
+          <Alert>
+            <AlertDescription>Loading map configuration...</AlertDescription>
           </Alert>
         )}
 
