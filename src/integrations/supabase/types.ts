@@ -14,7 +14,133 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      climate_actions: {
+        Row: {
+          category: Database["public"]["Enums"]["action_category"]
+          city: string | null
+          country: string | null
+          created_at: string | null
+          id: string
+          is_public: boolean | null
+          latitude: number | null
+          longitude: number | null
+          photo_url: string | null
+          points_awarded: number | null
+          story: string | null
+          updated_at: string | null
+          user_id: string
+          voice_note_url: string | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["action_category"]
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          photo_url?: string | null
+          points_awarded?: number | null
+          story?: string | null
+          updated_at?: string | null
+          user_id: string
+          voice_note_url?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["action_category"]
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          photo_url?: string | null
+          points_awarded?: number | null
+          story?: string | null
+          updated_at?: string | null
+          user_id?: string
+          voice_note_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "climate_actions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          id: string
+          is_public: boolean | null
+          updated_at: string | null
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id: string
+          is_public?: boolean | null
+          updated_at?: string | null
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          updated_at?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      user_stats: {
+        Row: {
+          created_at: string | null
+          current_streak: number | null
+          last_action_date: string | null
+          longest_streak: number | null
+          total_actions: number | null
+          total_points: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_streak?: number | null
+          last_action_date?: string | null
+          longest_streak?: number | null
+          total_actions?: number | null
+          total_points?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_streak?: number | null
+          last_action_date?: string | null
+          longest_streak?: number | null
+          total_actions?: number | null
+          total_points?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_stats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +149,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      action_category:
+        | "tree_planting"
+        | "water_saving"
+        | "energy_conservation"
+        | "teaching"
+        | "recycling"
+        | "transportation"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +283,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      action_category: [
+        "tree_planting",
+        "water_saving",
+        "energy_conservation",
+        "teaching",
+        "recycling",
+        "transportation",
+        "other",
+      ],
+    },
   },
 } as const

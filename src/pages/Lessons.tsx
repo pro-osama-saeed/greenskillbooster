@@ -5,6 +5,7 @@ import { lessons } from "@/data/lessons";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Search } from "lucide-react";
+import { TrackActionButton } from "@/components/TrackActionButton";
 
 const Lessons = () => {
   const { t } = useLanguage();
@@ -21,11 +22,14 @@ const Lessons = () => {
       <Header />
       <main className="container py-8 bg-gradient-section">
         <div className="space-y-6">
-          <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">{t("lessons")}</h1>
-            <p className="text-muted-foreground text-lg">
-              Browse our collection of climate skills micro-lessons
-            </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-4xl font-bold text-foreground mb-2">{t("lessons")}</h1>
+              <p className="text-muted-foreground text-lg">
+                Browse our collection of climate skills micro-lessons
+              </p>
+            </div>
+            <TrackActionButton />
           </div>
 
           <div className="relative">

@@ -10,6 +10,7 @@ import heroImage from "@/assets/hero-climate.jpg";
 import { lessons } from "@/data/lessons";
 import { WeatherCard } from "@/components/WeatherCard";
 import { DidYouKnowBox } from "@/components/DidYouKnowBox";
+import { TrackActionButton } from "@/components/TrackActionButton";
 
 const Index = () => {
   const { t } = useLanguage();
@@ -46,6 +47,7 @@ const Index = () => {
                   {t("startLearning")}
                 </Button>
               </Link>
+              <TrackActionButton />
               <Link to="/dashboard">
                 <Button size="lg" variant="outline" className="text-lg px-8 bg-background/10 text-primary-foreground border-primary-foreground/30 hover:bg-background/20">
                   <Database className="h-5 w-5 mr-2" />

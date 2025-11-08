@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { Leaf, Menu } from "lucide-react";
+import { Leaf, Menu, User, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Select,
   SelectContent,
@@ -17,6 +18,7 @@ import {
 
 export const Header = () => {
   const { language, setLanguage, t } = useLanguage();
+  const { user, signOut } = useAuth();
 
   const NavLinks = () => (
     <>
@@ -25,6 +27,9 @@ export const Header = () => {
       </Link>
       <Link to="/dashboard">
         <Button variant="ghost">Dashboard</Button>
+      </Link>
+      <Link to="/community">
+        <Button variant="ghost">Community</Button>
       </Link>
       <Link to="/badges">
         <Button variant="ghost">{t("badges")}</Button>
@@ -67,6 +72,23 @@ export const Header = () => {
               <SelectItem value="hi">हिन्दी</SelectItem>
             </SelectContent>
           </Select>
+
+          {user ? (
+            <div className="hidden md:flex items-center gap-2">
+              <Link to="/impact">
+                <Button variant="ghost" size="icon">
+                  <User className="h-5 w-5" />
+                </Button>
+              </Link>
+              <Button variant="ghost" size="icon" onClick={signOut}>
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
+          ) : (
+            <Link to="/auth" className="hidden md:block">
+              <Button variant="outline">Sign In</Button>
+            </Link>
+          )}
 
           {/* Mobile Menu */}
           <Sheet>
