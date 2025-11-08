@@ -25,6 +25,21 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Validate token format
+    if (!mapboxToken.startsWith('pk.')) {
+      console.error('Invalid MAPBOX_TOKEN format - must start with "pk."');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid token format',
+          message: 'Mapbox token must start with "pk." - please update the MAPBOX_TOKEN secret with a valid token from https://account.mapbox.com/access-tokens/' 
+        }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     console.log('Returning Mapbox token (length:', mapboxToken.length, ')');
 
     return new Response(

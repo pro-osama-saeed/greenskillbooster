@@ -106,11 +106,22 @@ export const InteractiveMap = () => {
         
         if (error) {
           console.error('Error fetching Mapbox token:', error);
-          setMapError('Failed to load map token. Please try again later.');
+          setMapError(error.message || 'Failed to load map token. Please try again later.');
+          return;
+        }
+
+        if (data?.error) {
+          console.error('Token error:', data.error, data.message);
+          setMapError(data.message || 'Failed to configure map token.');
           return;
         }
 
         if (data?.token) {
+          // Validate token format on client side too
+          if (!data.token.startsWith('pk.')) {
+            setMapError('Invalid Mapbox token format. Token must start with "pk."');
+            return;
+          }
           setMapboxToken(data.token);
           setMapError(null);
         } else {
