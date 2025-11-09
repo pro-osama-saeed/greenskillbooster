@@ -1,4 +1,11 @@
 import { Lesson } from "@/types/lesson";
+import diagramRainwater from "@/assets/diagram-rainwater.jpg";
+import diagramComposting from "@/assets/diagram-composting.jpg";
+import diagramCleanup from "@/assets/diagram-cleanup.jpg";
+import diagramEnergy from "@/assets/diagram-energy.jpg";
+import diagramBiodiversity from "@/assets/diagram-biodiversity.jpg";
+import diagramRecycling from "@/assets/diagram-recycling.jpg";
+import diagramCommunication from "@/assets/diagram-communication.jpg";
 
 export const lessons: Lesson[] = [
   {
@@ -47,6 +54,7 @@ Solar systems can be installed on rooftops, in fields, or even on water bodies. 
     description: "Master techniques to collect and store rainwater for household and garden use.",
     category: "water",
     duration: 6,
+    diagramUrl: diagramRainwater,
     content: `Rainwater harvesting captures rain from roofs and surfaces, storing it for later use. This ancient practice is becoming crucial as water scarcity increases globally.
 
 Basic rainwater harvesting system:
@@ -110,6 +118,7 @@ A 100 square meter roof can collect approximately 80,000 liters of water annuall
     description: "Turn organic waste into valuable soil amendment while reducing landfill waste.",
     category: "waste",
     duration: 6,
+    diagramUrl: diagramComposting,
     content: `Composting recycles organic materials into nutrient-rich soil, reducing waste and improving plant growth.
 
 What to compost:
@@ -178,6 +187,7 @@ Composting diverts up to 30% of household waste from landfills and creates free,
     description: "Learn to mobilize your neighborhood for impactful environmental action.",
     category: "community",
     duration: 7,
+    diagramUrl: diagramCleanup,
     content: `Community cleanups bring people together while improving local environments. Here's how to organize successful events:
 
 Planning phase:
@@ -260,6 +270,7 @@ A well-organized cleanup can remove hundreds of kilograms of waste while buildin
     description: "Simple ways to reduce energy consumption and save money.",
     category: "energy",
     duration: 5,
+    diagramUrl: diagramEnergy,
     content: `Improving home energy efficiency reduces bills and carbon emissions significantly.
 
 Quick efficiency improvements:
@@ -315,6 +326,7 @@ An energy-efficient home can reduce energy bills by 25-50% while creating a more
     description: "Create habitats that support native plants, pollinators, and wildlife.",
     category: "trees",
     duration: 6,
+    diagramUrl: diagramBiodiversity,
     content: `Biodiversity is declining rapidly, but everyone can help by creating wildlife-friendly spaces.
 
 Creating pollinator gardens:
@@ -385,6 +397,7 @@ Even small gardens can support dozens of species. A typical native plant support
     description: "Master the art of proper recycling and reduce contamination.",
     category: "waste",
     duration: 5,
+    diagramUrl: diagramRecycling,
     content: `Recycling only works when done correctly. Contaminated recycling often ends up in landfills.
 
 Know your recyclables:
@@ -446,6 +459,7 @@ One contaminated item can ruin an entire batch of recyclables!`,
     description: "Learn to talk about climate change effectively and inspire action.",
     category: "communication",
     duration: 7,
+    diagramUrl: diagramCommunication,
     content: `Communicating about climate change is challenging but crucial. Here's how to do it effectively:
 
 Key principles:

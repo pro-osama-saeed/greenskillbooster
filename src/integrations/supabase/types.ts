@@ -97,6 +97,93 @@ export type Database = {
           },
         ]
       }
+      feedback_forms: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          email: string
+          id: string
+          message: string
+          name: string
+          status: string | null
+          subject: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          message: string
+          name: string
+          status?: string | null
+          subject: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          status?: string | null
+          subject?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      involvement_forms: {
+        Row: {
+          availability: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          experience: string | null
+          full_name: string
+          id: string
+          motivation: string | null
+          organization: string | null
+          portfolio_url: string | null
+          role_type: string
+          skills: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          availability?: string | null
+          country?: string | null
+          created_at?: string | null
+          email: string
+          experience?: string | null
+          full_name: string
+          id?: string
+          motivation?: string | null
+          organization?: string | null
+          portfolio_url?: string | null
+          role_type: string
+          skills?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          availability?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string
+          experience?: string | null
+          full_name?: string
+          id?: string
+          motivation?: string | null
+          organization?: string | null
+          portfolio_url?: string | null
+          role_type?: string
+          skills?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       lesson_suggestions: {
         Row: {
           admin_notes: string | null
@@ -157,6 +244,39 @@ export type Database = {
           is_public?: boolean | null
           updated_at?: string | null
           username?: string
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_description: string | null
+          achievement_icon: string | null
+          achievement_name: string
+          achievement_type: string
+          earned_at: string | null
+          id: string
+          points_awarded: number | null
+          user_id: string
+        }
+        Insert: {
+          achievement_description?: string | null
+          achievement_icon?: string | null
+          achievement_name: string
+          achievement_type: string
+          earned_at?: string | null
+          id?: string
+          points_awarded?: number | null
+          user_id: string
+        }
+        Update: {
+          achievement_description?: string | null
+          achievement_icon?: string | null
+          achievement_name?: string
+          achievement_type?: string
+          earned_at?: string | null
+          id?: string
+          points_awarded?: number | null
+          user_id?: string
         }
         Relationships: []
       }

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProgress } from "@/contexts/ProgressContext";
 import { lessons } from "@/data/lessons";
-import { CheckCircle2, Volume2, ArrowLeft, Loader2 } from "lucide-react";
+import { CheckCircle2, Volume2, ArrowLeft, Loader2, Pause, Square } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,7 @@ const LessonDetail = () => {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [showDragDrop, setShowDragDrop] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
@@ -107,8 +108,17 @@ const LessonDetail = () => {
   const handlePlayVoice = async () => {
     if (!lesson) return;
 
+    // If audio is already playing and paused, resume it
+    if (audioRef.current && isPaused) {
+      audioRef.current.play();
+      setIsPaused(false);
+      setIsPlayingAudio(true);
+      return;
+    }
+
     try {
       setIsPlayingAudio(true);
+      setIsPaused(false);
       
       // Call the text-to-speech edge function
       const { data, error } = await supabase.functions.invoke('text-to-speech', {
@@ -140,11 +150,13 @@ const LessonDetail = () => {
         
         audio.onended = () => {
           setIsPlayingAudio(false);
+          setIsPaused(false);
           URL.revokeObjectURL(audioUrl);
         };
         
         audio.onerror = () => {
           setIsPlayingAudio(false);
+          setIsPaused(false);
           toast.error("Failed to play audio");
         };
 
@@ -154,9 +166,27 @@ const LessonDetail = () => {
     } catch (error) {
       console.error('Error playing voice:', error);
       setIsPlayingAudio(false);
+      setIsPaused(false);
       toast.error("Failed to generate audio", {
         description: error instanceof Error ? error.message : "Please try again",
       });
+    }
+  };
+
+  const handlePauseVoice = () => {
+    if (audioRef.current && isPlayingAudio) {
+      audioRef.current.pause();
+      setIsPaused(true);
+      setIsPlayingAudio(false);
+    }
+  };
+
+  const handleStopVoice = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setIsPlayingAudio(false);
+      setIsPaused(false);
     }
   };
 
@@ -295,6 +325,11 @@ const LessonDetail = () => {
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Playing...
                   </>
+                ) : isPaused ? (
+                  <>
+                    <Volume2 className="h-4 w-4 mr-2" />
+                    Resume
+                  </>
                 ) : (
                   <>
                     <Volume2 className="h-4 w-4 mr-2" />
@@ -302,7 +337,37 @@ const LessonDetail = () => {
                   </>
                 )}
               </Button>
+              {(isPlayingAudio || isPaused) && (
+                <>
+                  <Button 
+                    onClick={handlePauseVoice} 
+                    variant="outline"
+                    disabled={!isPlayingAudio}
+                  >
+                    <Pause className="h-4 w-4 mr-2" />
+                    Pause
+                  </Button>
+                  <Button 
+                    onClick={handleStopVoice} 
+                    variant="outline"
+                  >
+                    <Square className="h-4 w-4 mr-2" />
+                    Stop
+                  </Button>
+                </>
+              )}
             </div>
+
+            {/* Lesson Diagram */}
+            {lesson.diagramUrl && (
+              <div className="rounded-lg overflow-hidden border border-border">
+                <img 
+                  src={lesson.diagramUrl} 
+                  alt={`${lesson.title} diagram`}
+                  className="w-full h-auto"
+                />
+              </div>
+            )}
 
             <div>
               <h3 className="text-xl font-bold mb-4">{t("learningObjectives")}</h3>

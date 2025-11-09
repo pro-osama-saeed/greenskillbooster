@@ -6,6 +6,7 @@ export interface Lesson {
   duration: number; // minutes
   content: string;
   objectives: string[];
+  diagramUrl?: string;
   quiz?: QuizQuestion[];
   dragDropActivity?: DragDropActivity;
   checklistActivity?: ChecklistActivity;

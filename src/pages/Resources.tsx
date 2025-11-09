@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ExternalLink, Github, Video, FileText, Mail } from "lucide-react";
+import { FeedbackForm } from "@/components/FeedbackForm";
 
 const Resources = () => {
   const { t } = useLanguage();
@@ -134,13 +135,10 @@ const Resources = () => {
                 found a bug, or want to partner with us, we'd love to hear from you.
               </p>
               <div className="space-y-2 text-sm">
-                <p><strong className="text-foreground">General inquiries:</strong> <span className="text-muted-foreground">hello@greenskill.org</span></p>
-                <p><strong className="text-foreground">Partnerships:</strong> <span className="text-muted-foreground">partners@greenskill.org</span></p>
-                <p><strong className="text-foreground">Technical support:</strong> <span className="text-muted-foreground">support@greenskill.org</span></p>
+                <p><strong className="text-foreground">General inquiries & Partnerships:</strong> <span className="text-muted-foreground">haliimaakhan@gmail.com</span></p>
+                <p><strong className="text-foreground">Technical support:</strong> <span className="text-muted-foreground">osamas.bizz@gmail.com</span></p>
               </div>
-              <Button className="w-full sm:w-auto">
-                Send Feedback
-              </Button>
+              <FeedbackForm />
             </CardContent>
           </Card>
         </div>

@@ -214,28 +214,79 @@ export const InteractiveMap = () => {
         <div className="relative w-full h-[500px] rounded-lg overflow-hidden">
           <div ref={mapContainer} className="absolute inset-0" />
           
-          {/* Legend Overlay */}
-          <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-border">
-            <p className="text-xs font-semibold text-foreground mb-2">
+        {/* Legend Overlay */}
+          <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-border max-w-xs">
+            <p className="text-sm font-semibold text-foreground mb-3">
               {activeLayer === 'satellite' && '🛰️ Satellite Imagery'}
               {activeLayer === 'vegetation' && '🌱 Vegetation Cover (NDVI)'}
               {activeLayer === 'temperature' && '🌡️ Temperature Data'}
               {activeLayer === 'rainfall' && '💧 Rainfall Patterns'}
             </p>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-success" />
-                <span>High</span>
+            
+            {activeLayer === 'satellite' && (
+              <div className="space-y-2 text-xs text-muted-foreground">
+                <p className="font-medium text-foreground">High-resolution Earth observation</p>
+                <p>Real-time satellite imagery from Sentinel-2 and Landsat 8/9 satellites, updated every 5-10 days. Shows true-color composite imagery at 10-30m resolution.</p>
+                <p className="pt-2 border-t border-border">Data sources: ESA Copernicus, NASA USGS</p>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-gold" />
-                <span>Moderate</span>
+            )}
+            
+            {activeLayer === 'vegetation' && (
+              <div className="space-y-2 text-xs text-muted-foreground">
+                <p className="font-medium text-foreground">NDVI (Normalized Difference Vegetation Index)</p>
+                <div className="flex items-center gap-2 py-1">
+                  <div className="w-3 h-3 rounded-full bg-[#006400]" />
+                  <span>Dense vegetation (0.6-1.0)</span>
+                </div>
+                <div className="flex items-center gap-2 py-1">
+                  <div className="w-3 h-3 rounded-full bg-[#90EE90]" />
+                  <span>Moderate vegetation (0.3-0.6)</span>
+                </div>
+                <div className="flex items-center gap-2 py-1">
+                  <div className="w-3 h-3 rounded-full bg-[#D2B48C]" />
+                  <span>Sparse/barren (-0.1-0.3)</span>
+                </div>
+                <p className="pt-2 border-t border-border">Measures plant health and coverage. Higher values indicate healthier, denser vegetation.</p>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-accent" />
-                <span>Low</span>
+            )}
+            
+            {activeLayer === 'temperature' && (
+              <div className="space-y-2 text-xs text-muted-foreground">
+                <p className="font-medium text-foreground">Land Surface Temperature (LST)</p>
+                <div className="flex items-center gap-2 py-1">
+                  <div className="w-3 h-3 rounded-full bg-[#8B0000]" />
+                  <span>Very hot (&gt;40°C / 104°F)</span>
+                </div>
+                <div className="flex items-center gap-2 py-1">
+                  <div className="w-3 h-3 rounded-full bg-[#FFA500]" />
+                  <span>Hot (30-40°C / 86-104°F)</span>
+                </div>
+                <div className="flex items-center gap-2 py-1">
+                  <div className="w-3 h-3 rounded-full bg-[#4169E1]" />
+                  <span>Cool (&lt;30°C / 86°F)</span>
+                </div>
+                <p className="pt-2 border-t border-border">Based on thermal infrared data from MODIS Terra/Aqua satellites. Shows daily average temperatures.</p>
               </div>
-            </div>
+            )}
+            
+            {activeLayer === 'rainfall' && (
+              <div className="space-y-2 text-xs text-muted-foreground">
+                <p className="font-medium text-foreground">Precipitation Accumulation</p>
+                <div className="flex items-center gap-2 py-1">
+                  <div className="w-3 h-3 rounded-full bg-[#00008B]" />
+                  <span>Heavy (&gt;300mm/month)</span>
+                </div>
+                <div className="flex items-center gap-2 py-1">
+                  <div className="w-3 h-3 rounded-full bg-[#4169E1]" />
+                  <span>Moderate (100-300mm)</span>
+                </div>
+                <div className="flex items-center gap-2 py-1">
+                  <div className="w-3 h-3 rounded-full bg-[#87CEEB]" />
+                  <span>Low (&lt;100mm/month)</span>
+                </div>
+                <p className="pt-2 border-t border-border">Monthly precipitation data from GPM (Global Precipitation Measurement) mission and NOAA.</p>
+              </div>
+            )}
           </div>
         </div>
 

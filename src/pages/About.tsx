@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Heart, Users, Globe, Target } from "lucide-react";
+import { GetInvolvedForms } from "@/components/GetInvolvedForms";
 
 const About = () => {
   const { t } = useLanguage();
@@ -68,15 +69,30 @@ const About = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  We're a diverse team of educators, climate scientists, software developers, 
-                  and community organizers united by a common goal: making climate education 
-                  accessible to everyone.
-                </p>
-                <p className="text-muted-foreground">
-                  Our team includes experts from various regions who ensure our content is 
-                  culturally appropriate and locally relevant.
-                </p>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="flex flex-col items-center text-center space-y-3">
+                    <img 
+                      src="/src/assets/profile-osama.jpg" 
+                      alt="Osama Saeed"
+                      className="w-32 h-32 rounded-full object-cover border-4 border-primary/20"
+                    />
+                    <div>
+                      <h3 className="font-bold text-lg text-foreground">Osama Saeed</h3>
+                      <p className="text-sm text-muted-foreground">BS Cyber Security</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center text-center space-y-3">
+                    <img 
+                      src="/src/assets/profile-haleema.jpg" 
+                      alt="Haleema Sadia"
+                      className="w-32 h-32 rounded-full object-cover border-4 border-primary/20"
+                    />
+                    <div>
+                      <h3 className="font-bold text-lg text-foreground">Haleema Sadia</h3>
+                      <p className="text-sm text-muted-foreground">BS DSWT</p>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -119,12 +135,7 @@ const About = () => {
                 GreenSkill Booster is a community project, and we welcome contributions from 
                 educators, translators, climate experts, and anyone passionate about climate education.
               </p>
-              <div className="space-y-2 text-muted-foreground">
-                <p><strong className="text-foreground">Educators:</strong> Help us create new lessons and improve existing content</p>
-                <p><strong className="text-foreground">Translators:</strong> Make our lessons accessible in more languages</p>
-                <p><strong className="text-foreground">Developers:</strong> Contribute to our open-source platform</p>
-                <p><strong className="text-foreground">Partners:</strong> Collaborate with us to reach more communities</p>
-              </div>
+              <GetInvolvedForms />
             </CardContent>
           </Card>
         </div>
