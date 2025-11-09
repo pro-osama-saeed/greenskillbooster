@@ -6,7 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useProgress } from "@/contexts/ProgressContext";
 import { lessons } from "@/data/lessons";
 import { CheckCircle2, Volume2, ArrowLeft, Loader2, Pause, Square, RefreshCw } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DidYouKnowBox } from "@/components/DidYouKnowBox";
@@ -14,6 +14,8 @@ import { DisasterRiskBox } from "@/components/DisasterRiskBox";
 import { DragDropActivity } from "@/components/DragDropActivity";
 import { ChecklistActivity } from "@/components/ChecklistActivity";
 import { ChatBot } from "@/components/ChatBot";
+import { QuizQuestion, DragDropActivity as DragDropActivityType, ChecklistActivity as ChecklistActivityType } from "@/types/lesson";
+import { shuffleQuizQuestions, shuffleDragDropItems, shuffleChecklistItems } from "@/lib/quizUtils";
 
 const LessonDetail = () => {
   const { id } = useParams();
@@ -34,8 +36,26 @@ const LessonDetail = () => {
     checklist: false,
   });
   const [isPracticeMode, setIsPracticeMode] = useState(false);
+  const [randomizedQuiz, setRandomizedQuiz] = useState<QuizQuestion[] | null>(null);
+  const [randomizedDragDrop, setRandomizedDragDrop] = useState<DragDropActivityType | null>(null);
+  const [randomizedChecklist, setRandomizedChecklist] = useState<ChecklistActivityType | null>(null);
 
   const lesson = lessons.find((l) => l.id === id);
+
+  // Initialize randomized content on component mount
+  useEffect(() => {
+    if (lesson) {
+      if (lesson.quiz) {
+        setRandomizedQuiz(shuffleQuizQuestions(lesson.quiz));
+      }
+      if (lesson.dragDropActivity) {
+        setRandomizedDragDrop(shuffleDragDropItems(lesson.dragDropActivity));
+      }
+      if (lesson.checklistActivity) {
+        setRandomizedChecklist(shuffleChecklistItems(lesson.checklistActivity));
+      }
+    }
+  }, [lesson]);
 
   if (!lesson) {
     return (
@@ -94,16 +114,31 @@ const LessonDetail = () => {
     setShowDragDrop(false);
     setShowChecklist(false);
     setActivitiesCompleted({ dragDrop: false, checklist: false });
+    
+    // Generate new randomized content
+    if (lesson) {
+      if (lesson.quiz) {
+        setRandomizedQuiz(shuffleQuizQuestions(lesson.quiz));
+      }
+      if (lesson.dragDropActivity) {
+        setRandomizedDragDrop(shuffleDragDropItems(lesson.dragDropActivity));
+      }
+      if (lesson.checklistActivity) {
+        setRandomizedChecklist(shuffleChecklistItems(lesson.checklistActivity));
+      }
+    }
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
     toast.info("🔄 Practice Mode Activated", {
-      description: "Retake this lesson without affecting your completion status",
+      description: "Questions and activities randomized for better learning",
     });
   };
 
   const handleQuizAnswer = () => {
     if (selectedAnswer === null) return;
 
-    const currentQuestion = lesson.quiz![quizIndex];
+    const quiz = randomizedQuiz || lesson.quiz!;
+    const currentQuestion = quiz[quizIndex];
     const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
 
     if (isCorrect) {
@@ -111,7 +146,7 @@ const LessonDetail = () => {
         description: "Great job! Keep going!",
       });
       
-      if (quizIndex < lesson.quiz!.length - 1) {
+      if (quizIndex < quiz.length - 1) {
         setQuizIndex(quizIndex + 1);
         setSelectedAnswer(null);
       } else {
@@ -214,7 +249,8 @@ const LessonDetail = () => {
     }
   };
 
-  if (showDragDrop && lesson.dragDropActivity) {
+  if (showDragDrop && (randomizedDragDrop || lesson.dragDropActivity)) {
+    const activity = randomizedDragDrop || lesson.dragDropActivity!;
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -228,7 +264,7 @@ const LessonDetail = () => {
             Back to Lessons
           </Button>
           <DragDropActivity
-            activity={lesson.dragDropActivity}
+            activity={activity}
             onComplete={() => {
               setActivitiesCompleted({ ...activitiesCompleted, dragDrop: true });
               setShowDragDrop(false);
@@ -240,7 +276,8 @@ const LessonDetail = () => {
     );
   }
 
-  if (showChecklist && lesson.checklistActivity) {
+  if (showChecklist && (randomizedChecklist || lesson.checklistActivity)) {
+    const activity = randomizedChecklist || lesson.checklistActivity!;
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -254,7 +291,7 @@ const LessonDetail = () => {
             Back to Lessons
           </Button>
           <ChecklistActivity
-            activity={lesson.checklistActivity}
+            activity={activity}
             onComplete={() => {
               setActivitiesCompleted({ ...activitiesCompleted, checklist: true });
               setShowChecklist(false);
@@ -266,8 +303,9 @@ const LessonDetail = () => {
     );
   }
 
-  if (showQuiz && lesson.quiz) {
-    const currentQuestion = lesson.quiz[quizIndex];
+  if (showQuiz && (randomizedQuiz || lesson.quiz)) {
+    const quiz = randomizedQuiz || lesson.quiz!;
+    const currentQuestion = quiz[quizIndex];
     
     return (
       <div className="min-h-screen bg-background">
@@ -277,7 +315,7 @@ const LessonDetail = () => {
             <CardHeader>
               <CardTitle>{t("quiz")}</CardTitle>
               <p className="text-muted-foreground">
-                Question {quizIndex + 1} of {lesson.quiz.length}
+                Question {quizIndex + 1} of {quiz.length}
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -302,7 +340,7 @@ const LessonDetail = () => {
                 disabled={selectedAnswer === null}
                 className="w-full"
               >
-                {quizIndex < lesson.quiz.length - 1 ? t("nextQuestion") : t("finish")}
+                {quizIndex < quiz.length - 1 ? t("nextQuestion") : t("finish")}
               </Button>
             </CardContent>
           </Card>
@@ -344,7 +382,7 @@ const LessonDetail = () => {
                 <div>
                   <p className="font-semibold text-primary">Practice Mode Active</p>
                   <p className="text-sm text-muted-foreground">
-                    You're retaking this lesson. Your completion status won't be affected.
+                    Questions and activities randomized for better learning. Your completion status won't be affected.
                   </p>
                 </div>
               </div>
