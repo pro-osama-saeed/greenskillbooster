@@ -2,6 +2,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import { BookOpen, Target, Users, Lightbulb, CheckCircle2, Download } from "lucide-react";
 import { Button } from "./ui/button";
+import jsPDF from "jspdf";
+import "jspdf/dist/polyfills.es.js";
+const downloadLessonPlanPDF = () => {
+  const doc = new jsPDF();
+
+  // Grab all text from #lesson-content
+  const lessonContent = document.getElementById("lesson-content")?.innerText || "No content found.";
+
+  // Split into lines to fit PDF page width
+  const lines = doc.splitTextToSize(lessonContent, 180);
+
+  doc.setFontSize(12);
+  doc.text(lines, 10, 10);
+  doc.save("GreenSkill_LessonPlan.pdf");
+};
 
 export const EducatorDocs = () => {
   return (
@@ -167,11 +182,16 @@ export const EducatorDocs = () => {
           </div>
         </CardContent>
       </Card>
+<div id="lesson-content">
+ 
+
 
       <Card>
         <CardHeader>
+          
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
+            
             Sample Lesson Plans
           </CardTitle>
         </CardHeader>
@@ -219,13 +239,16 @@ export const EducatorDocs = () => {
               </div>
             </div>
           </div>
+          
 
-          <Button variant="outline" className="w-full gap-2">
-            <Download className="w-4 h-4" />
-            Download Full Lesson Plan Templates
-          </Button>
+          <Button onClick={downloadLessonPlanPDF} className="w-full gap-2">
+  <Download className="w-4 h-4" />
+  Download Full Lesson Plan Templates
+</Button>
+
         </CardContent>
       </Card>
+      </div>
 
       <Card>
         <CardHeader>
