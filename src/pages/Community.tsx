@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, MapPin, Volume2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, MapPin, Volume2, Filter } from 'lucide-react';
 import { Header } from '@/components/Header';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -39,8 +40,11 @@ export default function Community() {
   const [actions, setActions] = useState<ClimateAction[]>([]);
   const [loading, setLoading] = useState(true);
   const [mapToken, setMapToken] = useState<string>('');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(Object.keys(CATEGORY_LABELS));
+  const [userColors, setUserColors] = useState<Record<string, string>>({});
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const markers = useRef<mapboxgl.Marker[]>([]);
 
   useEffect(() => {
     fetchActions();
@@ -71,8 +75,35 @@ export default function Community() {
   useEffect(() => {
     if (mapToken && mapContainer.current && !map.current && actions.length > 0) {
       initializeMap();
+    } else if (map.current) {
+      updateMarkers();
     }
-  }, [mapToken, actions]);
+  }, [mapToken, actions, selectedCategories]);
+
+  // Generate unique color for each user based on user_id
+  const getUserColor = (userId: string): string => {
+    if (userColors[userId]) return userColors[userId];
+    
+    // Generate color from user_id hash
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+      hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    const hue = Math.abs(hash % 360);
+    const color = `hsl(${hue}, 70%, 55%)`;
+    
+    setUserColors(prev => ({ ...prev, [userId]: color }));
+    return color;
+  };
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories(prev => 
+      prev.includes(category)
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+  };
 
   const fetchMapToken = async () => {
     try {
@@ -97,7 +128,7 @@ export default function Community() {
         `)
         .eq('is_public', true)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (error) throw error;
       setActions(data || []);
@@ -108,31 +139,41 @@ export default function Community() {
     }
   };
 
-  const initializeMap = () => {
-    if (!mapContainer.current || map.current) return;
+  const updateMarkers = () => {
+    if (!map.current) return;
 
-    mapboxgl.accessToken = mapToken;
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [0, 20],
-      zoom: 1.5
-    });
+    // Clear existing markers
+    markers.current.forEach(marker => marker.remove());
+    markers.current = [];
 
-    // Add markers for actions with location
-    actions.forEach((action) => {
+    // Add filtered markers
+    const filteredActions = actions.filter(action => 
+      selectedCategories.includes(action.category)
+    );
+
+    filteredActions.forEach((action) => {
       if (action.latitude && action.longitude && map.current) {
+        const userColor = getUserColor(action.profiles.username);
+        
         const el = document.createElement('div');
         el.className = 'marker';
-        el.style.backgroundColor = '#22c55e';
-        el.style.width = '24px';
-        el.style.height = '24px';
+        el.style.backgroundColor = userColor;
+        el.style.width = '28px';
+        el.style.height = '28px';
         el.style.borderRadius = '50%';
-        el.style.border = '2px solid white';
+        el.style.border = '3px solid white';
         el.style.cursor = 'pointer';
+        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        el.style.transition = 'transform 0.2s';
+        
+        el.addEventListener('mouseenter', () => {
+          el.style.transform = 'scale(1.2)';
+        });
+        
+        el.addEventListener('mouseleave', () => {
+          el.style.transform = 'scale(1)';
+        });
 
-        // Create popup content safely without XSS vulnerability
         const popupContent = document.createElement('div');
         popupContent.className = 'p-2';
         
@@ -152,14 +193,35 @@ export default function Community() {
         popupContent.appendChild(category);
         popupContent.appendChild(location);
 
-        new mapboxgl.Marker(el)
+        const marker = new mapboxgl.Marker(el)
           .setLngLat([action.longitude, action.latitude])
           .setPopup(
             new mapboxgl.Popup({ offset: 25 })
               .setDOMContent(popupContent)
           )
           .addTo(map.current);
+        
+        markers.current.push(marker);
       }
+    });
+  };
+
+  const initializeMap = () => {
+    if (!mapContainer.current || map.current) return;
+
+    mapboxgl.accessToken = mapToken;
+    
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [0, 20],
+      zoom: 1.5
+    });
+
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    
+    map.current.on('load', () => {
+      updateMarkers();
     });
   };
 
@@ -186,17 +248,40 @@ export default function Community() {
         </div>
 
         {mapToken && (
-          <div className="mb-8">
+          <div className="mb-8 space-y-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Filter className="w-5 h-5 text-primary" />
+                  <h3 className="font-semibold">Filter by Category</h3>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+                    <label
+                      key={key}
+                      className="flex items-center gap-2 cursor-pointer hover:bg-secondary/50 p-2 rounded transition-colors"
+                    >
+                      <Checkbox
+                        checked={selectedCategories.includes(key)}
+                        onCheckedChange={() => toggleCategory(key)}
+                      />
+                      <span className="text-sm">{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            
             <Card>
               <CardContent className="p-0">
-                <div ref={mapContainer} className="h-[400px] rounded-lg" />
+                <div ref={mapContainer} className="h-[500px] rounded-lg" />
               </CardContent>
             </Card>
           </div>
         )}
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {actions.map((action) => (
+          {actions.filter(action => selectedCategories.includes(action.category)).map((action) => (
             <Card key={action.id} className="overflow-hidden">
               {action.photo_url && (
                 <img
