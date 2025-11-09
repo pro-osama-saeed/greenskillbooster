@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DidYouKnowBox } from "@/components/DidYouKnowBox";
 import { DisasterRiskBox } from "@/components/DisasterRiskBox";
+import { DragDropActivity } from "@/components/DragDropActivity";
+import { ChecklistActivity } from "@/components/ChecklistActivity";
 
 const LessonDetail = () => {
   const { id } = useParams();
@@ -23,6 +25,12 @@ const LessonDetail = () => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [showDragDrop, setShowDragDrop] = useState(false);
+  const [showChecklist, setShowChecklist] = useState(false);
+  const [activitiesCompleted, setActivitiesCompleted] = useState({
+    dragDrop: false,
+    checklist: false,
+  });
 
   const lesson = lessons.find((l) => l.id === id);
 
@@ -43,6 +51,17 @@ const LessonDetail = () => {
   const isCompleted = progress.completedLessons.includes(lesson.id);
 
   const handleComplete = () => {
+    // Check if there are activities to complete first
+    if (lesson.dragDropActivity && !activitiesCompleted.dragDrop && !showDragDrop) {
+      setShowDragDrop(true);
+      return;
+    }
+
+    if (lesson.checklistActivity && !activitiesCompleted.checklist && !showChecklist) {
+      setShowChecklist(true);
+      return;
+    }
+
     if (lesson.quiz && !quizCompleted) {
       setShowQuiz(true);
       return;
@@ -63,18 +82,25 @@ const LessonDetail = () => {
     const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
 
     if (isCorrect) {
+      toast.success("Correct! 🎉", {
+        description: "Great job! Keep going!",
+      });
+      
       if (quizIndex < lesson.quiz!.length - 1) {
         setQuizIndex(quizIndex + 1);
         setSelectedAnswer(null);
-        toast.success("Correct!");
       } else {
         setQuizCompleted(true);
         setShowQuiz(false);
-        toast.success("Quiz completed!");
+        toast.success("Quiz completed! Amazing work!", {
+          description: "You've mastered this lesson content.",
+        });
         handleComplete();
       }
     } else {
-      toast.error("Try again!");
+      toast.error("Not quite right!", {
+        description: "Think about it and try again. You can do it!",
+      });
     }
   };
 
@@ -133,6 +159,58 @@ const LessonDetail = () => {
       });
     }
   };
+
+  if (showDragDrop && lesson.dragDropActivity) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container py-8 max-w-4xl">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate("/lessons")}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Lessons
+          </Button>
+          <DragDropActivity
+            activity={lesson.dragDropActivity}
+            onComplete={() => {
+              setActivitiesCompleted({ ...activitiesCompleted, dragDrop: true });
+              setShowDragDrop(false);
+              handleComplete();
+            }}
+          />
+        </main>
+      </div>
+    );
+  }
+
+  if (showChecklist && lesson.checklistActivity) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container py-8 max-w-4xl">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate("/lessons")}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Lessons
+          </Button>
+          <ChecklistActivity
+            activity={lesson.checklistActivity}
+            onComplete={() => {
+              setActivitiesCompleted({ ...activitiesCompleted, checklist: true });
+              setShowChecklist(false);
+              handleComplete();
+            }}
+          />
+        </main>
+      </div>
+    );
+  }
 
   if (showQuiz && lesson.quiz) {
     const currentQuestion = lesson.quiz[quizIndex];
@@ -244,8 +322,23 @@ const LessonDetail = () => {
               ))}
             </div>
 
+            {/* Did You Know Box */}
+            {lesson.didYouKnow && (
+              <Card className="bg-gradient-to-br from-gold/20 to-accent/20 border-gold/30">
+                <CardContent className="p-4">
+                  <div className="flex gap-3">
+                    <div className="text-2xl">💡</div>
+                    <div>
+                      <p className="font-semibold text-sm mb-1">Did You Know?</p>
+                      <p className="text-sm text-muted-foreground">{lesson.didYouKnow}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Contextual ASDI Data Widgets */}
-            <div className="space-y-4 mt-8">
+            <div className="space-y-4">
               <DidYouKnowBox />
               <DisasterRiskBox />
             </div>

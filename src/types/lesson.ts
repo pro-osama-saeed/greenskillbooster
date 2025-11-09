@@ -2,12 +2,47 @@ export interface Lesson {
   id: string;
   title: string;
   description: string;
-  category: "solar" | "water" | "trees" | "energy";
+  category: "solar" | "water" | "trees" | "energy" | "waste" | "community" | "communication";
   duration: number; // minutes
   content: string;
   objectives: string[];
   quiz?: QuizQuestion[];
+  dragDropActivity?: DragDropActivity;
+  checklistActivity?: ChecklistActivity;
+  didYouKnow?: string;
   voiceUrl?: string; // ElevenLabs placeholder
+}
+
+export interface DragDropActivity {
+  id: string;
+  title: string;
+  instruction: string;
+  items: DragDropItem[];
+  categories: DragDropCategory[];
+}
+
+export interface DragDropItem {
+  id: string;
+  text: string;
+  correctCategory: string;
+}
+
+export interface DragDropCategory {
+  id: string;
+  title: string;
+}
+
+export interface ChecklistActivity {
+  id: string;
+  title: string;
+  instruction: string;
+  items: ChecklistItem[];
+}
+
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  tip?: string;
 }
 
 export interface QuizQuestion {

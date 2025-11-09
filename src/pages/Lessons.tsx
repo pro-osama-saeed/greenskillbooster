@@ -3,12 +3,15 @@ import { LessonCard } from "@/components/LessonCard";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { lessons } from "@/data/lessons";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Lightbulb } from "lucide-react";
 import { TrackActionButton } from "@/components/TrackActionButton";
+import { useNavigate } from "react-router-dom";
 
 const Lessons = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredLessons = lessons.filter(lesson =>
@@ -22,14 +25,24 @@ const Lessons = () => {
       <Header />
       <main className="container py-8 bg-gradient-section">
         <div className="space-y-6">
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-start gap-4 flex-wrap">
             <div>
               <h1 className="text-4xl font-bold text-foreground mb-2">{t("lessons")}</h1>
               <p className="text-muted-foreground text-lg">
                 Browse our collection of climate skills micro-lessons
               </p>
             </div>
-            <TrackActionButton />
+            <div className="flex gap-2">
+              <Button
+                onClick={() => navigate("/suggest-lesson")}
+                variant="outline"
+                size="lg"
+              >
+                <Lightbulb className="h-4 w-4 mr-2" />
+                Suggest Lesson
+              </Button>
+              <TrackActionButton />
+            </div>
           </div>
 
           <div className="relative">

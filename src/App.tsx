@@ -10,6 +10,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Lessons from "./pages/Lessons";
 import LessonDetail from "./pages/LessonDetail";
+import SuggestLesson from "./pages/SuggestLesson";
+import AdminSuggestions from "./pages/AdminSuggestions";
 import Badges from "./pages/Badges";
 import Leaderboard from "./pages/Leaderboard";
 import About from "./pages/About";
@@ -36,8 +38,10 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
-                  <Route path="/lessons" element={<Lessons />} />
+  <Route path="/lessons" element={<Lessons />} />
                   <Route path="/lesson/:id" element={<LessonDetail />} />
+                  <Route path="/suggest-lesson" element={<SuggestLesson />} />
+                  <Route path="/admin/suggestions" element={<AdminSuggestions />} />
                   <Route path="/badges" element={<Badges />} />
                   <Route path="/leaderboard" element={<Leaderboard />} />
                   <Route path="/about" element={<About />} />
