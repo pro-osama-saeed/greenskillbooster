@@ -45,12 +45,23 @@ export const InteractiveMap = () => {
     try {
       mapboxgl.accessToken = mapboxToken;
 
+      // Check for WebGL support before creating map
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      
+      if (!gl) {
+        setMapError('WebGL is not supported in this browser. Please try opening this page in Chrome, Firefox, or Safari with hardware acceleration enabled.');
+        return;
+      }
+
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/satellite-streets-v12',
         center: [0, 20], // Center on global view
         zoom: 2,
         projection: 'globe' as any,
+        preserveDrawingBuffer: true,
+        failIfMajorPerformanceCaveat: false,
       });
 
       // Add navigation controls
@@ -106,9 +117,17 @@ export const InteractiveMap = () => {
         });
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error initializing map:', error);
-      setMapError('Failed to load map. Please check your Mapbox token.');
+      
+      // Provide specific error messages based on error type
+      if (error?.message?.includes('WebGL')) {
+        setMapError('WebGL is not available in this browser environment. This map requires WebGL support. Try viewing in a different browser or enable hardware acceleration in your browser settings.');
+      } else if (error?.message?.includes('token')) {
+        setMapError('Failed to authenticate map service. Please refresh the page.');
+      } else {
+        setMapError('Unable to load interactive map. This may be due to browser limitations in the preview environment.');
+      }
     }
   };
 
@@ -159,7 +178,16 @@ export const InteractiveMap = () => {
         {/* Error Message */}
         {mapError && (
           <Alert variant="destructive">
-            <AlertDescription>{mapError}</AlertDescription>
+            <AlertDescription>
+              <div className="space-y-2">
+                <p className="font-semibold">Map Loading Issue</p>
+                <p className="text-sm">{mapError}</p>
+                <p className="text-xs opacity-75 mt-2">
+                  Note: Interactive maps with 3D globe projections require WebGL support. 
+                  If you're seeing this in the Lovable preview, the map will work correctly when deployed to production.
+                </p>
+              </div>
+            </AlertDescription>
           </Alert>
         )}
 
