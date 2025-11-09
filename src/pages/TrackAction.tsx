@@ -40,7 +40,7 @@ const actionSchema = z.object({
 
 export default function TrackAction() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshSession } = useAuth();
   const { location } = useLocation();
   const [category, setCategory] = useState('');
   const [story, setStory] = useState('');
@@ -59,6 +59,20 @@ export default function TrackAction() {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
+
+  // Monitor auth state changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        if (event === 'SIGNED_OUT') {
+          toast.error('Your session has expired. Please sign in again.');
+          navigate('/auth');
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -178,6 +192,24 @@ export default function TrackAction() {
     setSubmitting(true);
 
     try {
+      // Verify session validity before submission
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (!session || sessionError) {
+        toast.error('Your session has expired. Please sign in again.');
+        navigate('/auth');
+        return;
+      }
+
+      // Verify session user ID matches context user ID
+      if (session.user.id !== user!.id) {
+        toast.error('Authentication mismatch. Please sign in again.');
+        navigate('/auth');
+        return;
+      }
+
+      // Refresh session to ensure we have a valid token
+      await refreshSession();
       let photoUrl = null;
       let voiceNoteUrl = null;
 
@@ -214,8 +246,24 @@ export default function TrackAction() {
       toast.success('Action tracked successfully! +10 points');
       navigate('/community');
     } catch (error: any) {
-      console.error('Error tracking action:', error);
-      toast.error(error.message || 'Failed to track action');
+      console.error('Error tracking action:', {
+        error,
+        userId: user?.id,
+        errorCode: error?.code,
+        errorMessage: error?.message,
+        errorDetails: error?.details
+      });
+      
+      // Check for RLS or authentication errors
+      if (error?.code === 'PGRST301' || error?.message?.includes('row-level security') || error?.message?.includes('violates row-level security policy')) {
+        toast.error('Authentication error. Please sign in again.');
+        navigate('/auth');
+      } else if (error?.message?.includes('JWT') || error?.message?.includes('token')) {
+        toast.error('Session expired. Please sign in again.');
+        navigate('/auth');
+      } else {
+        toast.error(error.message || 'Failed to track action');
+      }
     } finally {
       setSubmitting(false);
     }
