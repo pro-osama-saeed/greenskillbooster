@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Map, Layers, Cloud, Droplets, Sprout } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
+import { SimplifiedMap } from './SimplifiedMap';
 
 type MapLayer = 'satellite' | 'vegetation' | 'temperature' | 'rainfall';
 
@@ -16,6 +17,7 @@ export const InteractiveMap = () => {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [useSimplifiedMap, setUseSimplifiedMap] = useState(false);
 
   // Fetch Mapbox token from backend
   useEffect(() => {
@@ -50,7 +52,8 @@ export const InteractiveMap = () => {
       const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
       
       if (!gl) {
-        setMapError('WebGL is not supported in this browser. Please try opening this page in Chrome, Firefox, or Safari with hardware acceleration enabled.');
+        console.log('WebGL not available, switching to simplified map');
+        setUseSimplifiedMap(true);
         return;
       }
 
@@ -120,13 +123,15 @@ export const InteractiveMap = () => {
     } catch (error: any) {
       console.error('Error initializing map:', error);
       
-      // Provide specific error messages based on error type
+      // Switch to simplified map on any error
       if (error?.message?.includes('WebGL')) {
-        setMapError('WebGL is not available in this browser environment. This map requires WebGL support. Try viewing in a different browser or enable hardware acceleration in your browser settings.');
+        console.log('WebGL error detected, switching to simplified map');
+        setUseSimplifiedMap(true);
       } else if (error?.message?.includes('token')) {
         setMapError('Failed to authenticate map service. Please refresh the page.');
       } else {
-        setMapError('Unable to load interactive map. This may be due to browser limitations in the preview environment.');
+        console.log('Map initialization failed, switching to simplified map');
+        setUseSimplifiedMap(true);
       }
     }
   };
@@ -166,6 +171,26 @@ export const InteractiveMap = () => {
     map.current.setStyle(styles[layer]);
   };
 
+  // If simplified map should be used, render it directly
+  if (useSimplifiedMap) {
+    return (
+      <Card className="bg-gradient-card hover-lift border-primary/10">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Map className="h-5 w-5 text-primary" />
+            Interactive Climate Map
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Showing 2D view - WebGL not available in this environment
+          </p>
+        </CardHeader>
+        <CardContent>
+          <SimplifiedMap />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="bg-gradient-card hover-lift border-primary/10">
       <CardHeader>
@@ -182,10 +207,14 @@ export const InteractiveMap = () => {
               <div className="space-y-2">
                 <p className="font-semibold">Map Loading Issue</p>
                 <p className="text-sm">{mapError}</p>
-                <p className="text-xs opacity-75 mt-2">
-                  Note: Interactive maps with 3D globe projections require WebGL support. 
-                  If you're seeing this in the Lovable preview, the map will work correctly when deployed to production.
-                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setUseSimplifiedMap(true)}
+                  className="mt-2"
+                >
+                  Switch to 2D Map View
+                </Button>
               </div>
             </AlertDescription>
           </Alert>
