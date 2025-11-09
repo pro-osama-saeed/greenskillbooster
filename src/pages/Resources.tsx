@@ -1,9 +1,13 @@
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ExternalLink, Github, Video, FileText, Mail } from "lucide-react";
+import { ExternalLink, Github, Video, FileText, Mail, BookOpen, Languages, Code } from "lucide-react";
 import { FeedbackForm } from "@/components/FeedbackForm";
+import { EducatorDocs } from "@/components/EducatorDocs";
+import { TranslatorDocs } from "@/components/TranslatorDocs";
+import { DeveloperDocs } from "@/components/DeveloperDocs";
 
 const Resources = () => {
   const { t } = useLanguage();
@@ -66,28 +70,35 @@ const Resources = () => {
                 Documentation
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <h4 className="font-semibold text-foreground mb-1">For Educators</h4>
-                <p className="text-muted-foreground text-sm">
-                  Learn how to create effective micro-lessons and adapt content for your community
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-foreground mb-1">For Translators</h4>
-                <p className="text-muted-foreground text-sm">
-                  Guidelines for translating content while maintaining cultural relevance
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-foreground mb-1">For Developers</h4>
-                <p className="text-muted-foreground text-sm">
-                  Technical documentation for contributing to the codebase
-                </p>
-              </div>
-              <Button variant="outline" className="mt-4">
-                Access Documentation
-              </Button>
+            <CardContent>
+              <Tabs defaultValue="educators" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 mb-6">
+                  <TabsTrigger value="educators" className="gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    Educators
+                  </TabsTrigger>
+                  <TabsTrigger value="translators" className="gap-2">
+                    <Languages className="w-4 h-4" />
+                    Translators
+                  </TabsTrigger>
+                  <TabsTrigger value="developers" className="gap-2">
+                    <Code className="w-4 h-4" />
+                    Developers
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="educators">
+                  <EducatorDocs />
+                </TabsContent>
+
+                <TabsContent value="translators">
+                  <TranslatorDocs />
+                </TabsContent>
+
+                <TabsContent value="developers">
+                  <DeveloperDocs />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
 
@@ -100,22 +111,70 @@ const Resources = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
-                <a href="#" className="block p-4 rounded-lg border hover:bg-muted transition-colors">
-                  <h4 className="font-semibold text-foreground">Climate Action Toolkit</h4>
+                <a 
+                  href="https://www.un.org/en/climatechange/net-zero-coalition" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block p-4 rounded-lg border hover:bg-muted transition-colors"
+                >
+                  <h4 className="font-semibold text-foreground">UN Climate Action</h4>
                   <p className="text-sm text-muted-foreground">
-                    Free resources for implementing climate solutions in your community
+                    United Nations resources and initiatives for climate action and sustainability
                   </p>
                 </a>
-                <a href="#" className="block p-4 rounded-lg border hover:bg-muted transition-colors">
+                <a 
+                  href="https://www.ipcc.ch/" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block p-4 rounded-lg border hover:bg-muted transition-colors"
+                >
+                  <h4 className="font-semibold text-foreground">IPCC Reports</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Latest climate science reports and assessments from the Intergovernmental Panel on Climate Change
+                  </p>
+                </a>
+                <a 
+                  href="https://www.irena.org/Energy-Transition/Technology" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block p-4 rounded-lg border hover:bg-muted transition-colors"
+                >
                   <h4 className="font-semibold text-foreground">Renewable Energy Database</h4>
                   <p className="text-sm text-muted-foreground">
-                    Comprehensive information on solar, wind, and other renewable technologies
+                    IRENA's comprehensive information on solar, wind, and renewable energy technologies
                   </p>
                 </a>
-                <a href="#" className="block p-4 rounded-lg border hover:bg-muted transition-colors">
+                <a 
+                  href="https://www.climatejobs.com/" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block p-4 rounded-lg border hover:bg-muted transition-colors"
+                >
                   <h4 className="font-semibold text-foreground">Green Jobs Portal</h4>
                   <p className="text-sm text-muted-foreground">
-                    Find climate-related job opportunities and training programs
+                    Find climate-related job opportunities and training programs worldwide
+                  </p>
+                </a>
+                <a 
+                  href="https://drawdown.org/" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block p-4 rounded-lg border hover:bg-muted transition-colors"
+                >
+                  <h4 className="font-semibold text-foreground">Project Drawdown</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Research-based climate solutions and implementation strategies
+                  </p>
+                </a>
+                <a 
+                  href="https://www.greenpeace.org/international/" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block p-4 rounded-lg border hover:bg-muted transition-colors"
+                >
+                  <h4 className="font-semibold text-foreground">Greenpeace International</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Environmental campaigns and activism resources for climate action
                   </p>
                 </a>
               </div>
