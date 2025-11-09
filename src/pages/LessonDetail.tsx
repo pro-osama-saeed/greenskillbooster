@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProgress } from "@/contexts/ProgressContext";
 import { lessons } from "@/data/lessons";
-import { CheckCircle2, Volume2, ArrowLeft, Loader2, Pause, Square } from "lucide-react";
+import { CheckCircle2, Volume2, ArrowLeft, Loader2, Pause, Square, RefreshCw } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +33,7 @@ const LessonDetail = () => {
     dragDrop: false,
     checklist: false,
   });
+  const [isPracticeMode, setIsPracticeMode] = useState(false);
 
   const lesson = lessons.find((l) => l.id === id);
 
@@ -69,12 +70,34 @@ const LessonDetail = () => {
       return;
     }
     
-    completeLesson(lesson.id);
-    updateStreak();
-    toast.success(t("congratulations"), {
-      description: "You've completed this lesson and earned 100 points!",
+    if (!isPracticeMode) {
+      completeLesson(lesson.id);
+      updateStreak();
+      toast.success(t("congratulations"), {
+        description: "You've completed this lesson and earned 100 points!",
+      });
+      navigate("/badges");
+    } else {
+      toast.success("Practice session completed!", {
+        description: "Great review! Your completion status is preserved.",
+      });
+      navigate("/lessons");
+    }
+  };
+
+  const handleRetake = () => {
+    setIsPracticeMode(true);
+    setQuizIndex(0);
+    setSelectedAnswer(null);
+    setQuizCompleted(false);
+    setShowQuiz(false);
+    setShowDragDrop(false);
+    setShowChecklist(false);
+    setActivitiesCompleted({ dragDrop: false, checklist: false });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast.info("🔄 Practice Mode Activated", {
+      description: "Retake this lesson without affecting your completion status",
     });
-    navigate("/badges");
   };
 
   const handleQuizAnswer = () => {
@@ -292,14 +315,42 @@ const LessonDetail = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container py-8 max-w-4xl">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate("/lessons")}
-          className="mb-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Lessons
-        </Button>
+        <div className="flex items-center justify-between mb-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate("/lessons")}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Lessons
+          </Button>
+
+          {isCompleted && !isPracticeMode && (
+            <Button
+              onClick={handleRetake}
+              variant="outline"
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Retake Lesson
+            </Button>
+          )}
+        </div>
+
+        {isPracticeMode && (
+          <Card className="mb-6 bg-primary/5 border-primary/30">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <RefreshCw className="h-5 w-5 text-primary animate-pulse" />
+                <div>
+                  <p className="font-semibold text-primary">Practice Mode Active</p>
+                  <p className="text-sm text-muted-foreground">
+                    You're retaking this lesson. Your completion status won't be affected.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
@@ -413,9 +464,9 @@ const LessonDetail = () => {
               onClick={handleComplete} 
               size="lg" 
               className="w-full"
-              disabled={isCompleted}
+              disabled={isCompleted && !isPracticeMode}
             >
-              {isCompleted ? "Completed" : t("completeLesson")}
+              {isPracticeMode ? "Complete Practice Session" : isCompleted ? "Completed" : t("completeLesson")}
             </Button>
           </CardContent>
         </Card>

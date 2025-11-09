@@ -451,7 +451,27 @@ One contaminated item can ruin an entire batch of recyclables!`,
         { id: "recycle", title: "♻️ Recycle" },
         { id: "trash", title: "🗑️ Trash" }
       ]
-    }
+    },
+    quiz: [
+      {
+        id: "q1",
+        question: "What should you do with plastic grocery bags?",
+        options: ["Put in recycling bin", "Return to store collection", "Throw in trash", "Compost them"],
+        correctAnswer: 1
+      },
+      {
+        id: "q2",
+        question: "Why is contamination bad for recycling?",
+        options: ["It makes bins dirty", "One contaminated item can ruin an entire batch", "It's not actually bad", "It only affects paper"],
+        correctAnswer: 1
+      },
+      {
+        id: "q3",
+        question: "What should you do before recycling containers?",
+        options: ["Leave food inside", "Empty, clean, and dry", "Remove all labels", "Crush them flat"],
+        correctAnswer: 1
+      }
+    ]
   },
   {
     id: "climate-communication",
