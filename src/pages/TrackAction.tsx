@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Camera, Mic, Upload, Loader2, ArrowLeft } from 'lucide-react';
+import { Camera, Upload, Loader2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Header } from '@/components/Header';
 import { z } from 'zod';
@@ -26,9 +26,8 @@ const ACTION_CATEGORIES = [
 ];
 
 // File validation constants
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB (input limit, images will be compressed)
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-const MAX_AUDIO_SIZE = 10 * 1024 * 1024; // 10MB for audio
 
 // Validation schema
 const actionSchema = z.object({
@@ -47,11 +46,8 @@ export default function TrackAction() {
   const [isPublic, setIsPublic] = useState(true);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>('');
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const [compressing, setCompressing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -74,7 +70,63 @@ export default function TrackAction() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Image compression utility
+  const compressImage = async (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target?.result as string;
+        
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d')!;
+          
+          // Calculate new dimensions (max 1920x1080)
+          let width = img.width;
+          let height = img.height;
+          const MAX_WIDTH = 1920;
+          const MAX_HEIGHT = 1080;
+          
+          if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+            const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
+            width = width * ratio;
+            height = height * ratio;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Compress to blob then convert to file
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const compressedFile = new File(
+                  [blob],
+                  file.name,
+                  { type: file.type === 'image/png' ? 'image/png' : 'image/jpeg', lastModified: Date.now() }
+                );
+                resolve(compressedFile);
+              } else {
+                reject(new Error('Compression failed'));
+              }
+            },
+            file.type === 'image/png' ? 'image/png' : 'image/jpeg',
+            0.85 // 85% quality
+          );
+        };
+        
+        img.onerror = () => reject(new Error('Failed to load image'));
+      };
+      
+      reader.onerror = () => reject(new Error('Failed to read file'));
+    });
+  };
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file size
@@ -91,52 +143,28 @@ export default function TrackAction() {
         return;
       }
 
-      setPhoto(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+      try {
+        setCompressing(true);
+        toast.info('Compressing image...');
         
-        // Validate audio size
-        if (audioBlob.size > MAX_AUDIO_SIZE) {
-          toast.error('Audio recording too large. Maximum size is 10MB');
-          return;
-        }
+        const originalSize = (file.size / 1024 / 1024).toFixed(2);
+        const compressedFile = await compressImage(file);
+        const compressedSize = (compressedFile.size / 1024 / 1024).toFixed(2);
         
-        setAudioBlob(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-      toast.success('Recording started');
-    } catch (error) {
-      toast.error('Could not access microphone');
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      toast.success('Recording stopped');
+        setPhoto(compressedFile);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPhotoPreview(reader.result as string);
+        };
+        reader.readAsDataURL(compressedFile);
+        
+        toast.success(`Image compressed: ${originalSize}MB → ${compressedSize}MB`);
+      } catch (error) {
+        toast.error('Failed to compress image. Please try another file.');
+        e.target.value = '';
+      } finally {
+        setCompressing(false);
+      }
     }
   };
 
@@ -171,24 +199,6 @@ export default function TrackAction() {
       return;
     }
 
-    // Additional photo validation (belt and suspenders approach)
-    if (photo) {
-      if (photo.size > MAX_FILE_SIZE) {
-        toast.error('Image too large. Maximum size is 5MB');
-        return;
-      }
-      if (!ALLOWED_IMAGE_TYPES.includes(photo.type)) {
-        toast.error('Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed');
-        return;
-      }
-    }
-
-    // Additional audio validation
-    if (audioBlob && audioBlob.size > MAX_AUDIO_SIZE) {
-      toast.error('Audio recording too large. Maximum size is 10MB');
-      return;
-    }
-
     setSubmitting(true);
 
     try {
@@ -211,17 +221,10 @@ export default function TrackAction() {
       // Refresh session to ensure we have a valid token
       await refreshSession();
       let photoUrl = null;
-      let voiceNoteUrl = null;
 
       // Upload photo if exists
       if (photo) {
         photoUrl = await uploadFile(photo, 'action-photos', 'photos');
-      }
-
-      // Upload voice note if exists
-      if (audioBlob) {
-        const audioFile = new File([audioBlob], 'voice-note.webm', { type: 'audio/webm' });
-        voiceNoteUrl = await uploadFile(audioFile, 'voice-notes', 'notes');
       }
 
       // Insert action
@@ -232,7 +235,6 @@ export default function TrackAction() {
           category: category as any,
           story: story || null,
           photo_url: photoUrl,
-          voice_note_url: voiceNoteUrl,
           latitude: location?.latitude || null,
           longitude: location?.longitude || null,
           country: location?.country || null,
@@ -332,21 +334,35 @@ export default function TrackAction() {
 
               <div className="space-y-2">
                 <Label>Photo (optional)</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Images are automatically compressed for faster upload
+                </p>
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
                   onChange={handlePhotoChange}
                   className="hidden"
+                  disabled={compressing}
                 />
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}
                   className="w-full"
+                  disabled={compressing}
                 >
-                  <Camera className="w-4 h-4 mr-2" />
-                  {photo ? 'Change Photo' : 'Upload Photo'}
+                  {compressing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Compressing...
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="w-4 h-4 mr-2" />
+                      {photo ? 'Change Photo' : 'Upload Photo'}
+                    </>
+                  )}
                 </Button>
                 {photoPreview && (
                   <img
@@ -354,22 +370,6 @@ export default function TrackAction() {
                     alt="Preview"
                     className="w-full h-48 object-cover rounded-lg mt-2"
                   />
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label>Voice Note (optional)</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={isRecording ? stopRecording : startRecording}
-                  className="w-full"
-                >
-                  <Mic className={`w-4 h-4 mr-2 ${isRecording ? 'text-red-500' : ''}`} />
-                  {isRecording ? 'Stop Recording' : audioBlob ? 'Re-record' : 'Record Voice Note'}
-                </Button>
-                {audioBlob && !isRecording && (
-                  <p className="text-sm text-muted-foreground">Voice note recorded ✓</p>
                 )}
               </div>
 
