@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 interface BadgeDisplayProps {
   badge: BadgeType;
   size?: "sm" | "md" | "lg";
+  onClick?: () => void;
 }
 
 const sizeClasses = {
@@ -19,9 +20,16 @@ const badgeTypeColors = {
   bronze: "border-bronze bg-bronze/10",
 };
 
-export const BadgeDisplay = ({ badge, size = "md" }: BadgeDisplayProps) => {
+export const BadgeDisplay = ({ badge, size = "md", onClick }: BadgeDisplayProps) => {
   return (
-    <Card className={cn("overflow-hidden", badgeTypeColors[badge.type])}>
+    <Card 
+      className={cn(
+        "overflow-hidden transition-all",
+        badgeTypeColors[badge.type],
+        onClick && "cursor-pointer hover:scale-105 hover:shadow-lg"
+      )}
+      onClick={onClick}
+    >
       <CardContent className="p-6 text-center space-y-2">
         <div className={cn(
           "mx-auto rounded-full border-2 flex items-center justify-center",

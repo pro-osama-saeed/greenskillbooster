@@ -347,6 +347,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_early_adopter_badge: { Args: never; Returns: undefined }
+      award_event_badge: {
+        Args: { p_event_icon: string; p_event_name: string; p_user_id: string }
+        Returns: undefined
+      }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       has_role: {
         Args: {
