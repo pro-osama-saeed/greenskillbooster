@@ -13,6 +13,7 @@ import { DidYouKnowBox } from "@/components/DidYouKnowBox";
 import { DisasterRiskBox } from "@/components/DisasterRiskBox";
 import { DragDropActivity } from "@/components/DragDropActivity";
 import { ChecklistActivity } from "@/components/ChecklistActivity";
+import { ChatBot } from "@/components/ChatBot";
 
 const LessonDetail = () => {
   const { id } = useParams();
@@ -419,6 +420,9 @@ const LessonDetail = () => {
           </CardContent>
         </Card>
       </main>
+      
+      {/* ChatBot Widget */}
+      <ChatBot />
     </div>
   );
 };

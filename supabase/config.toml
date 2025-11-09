@@ -2,3 +2,12 @@ project_id = "nvxvrzpyeiuxwmqjxoxg"
 
 [functions.get-mapbox-token]
 verify_jwt = false
+
+[functions.chat-with-ai]
+verify_jwt = true
+
+[functions.speech-to-text]
+verify_jwt = true
+
+[functions.text-to-speech]
+verify_jwt = true

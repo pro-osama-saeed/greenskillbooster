@@ -6,6 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useProgress } from "@/contexts/ProgressContext";
 import { ProgressBar } from "@/components/ProgressBar";
 import { Award, BookOpen, Flame, Database } from "lucide-react";
+import { ChatBot } from "@/components/ChatBot";
 import heroImage from "@/assets/hero-climate.jpg";
 import { lessons } from "@/data/lessons";
 import { WeatherCard } from "@/components/WeatherCard";
@@ -184,6 +185,9 @@ const Index = () => {
           </CardContent>
         </Card>
       </section>
+      
+      {/* ChatBot Widget */}
+      <ChatBot />
     </div>
   );
 };
