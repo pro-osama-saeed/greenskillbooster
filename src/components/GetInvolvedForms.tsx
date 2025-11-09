@@ -102,7 +102,7 @@ export const GetInvolvedForms = () => {
           user_id: user.id,
           role_type: activeForm,
           ...validation.data
-        });
+        } as any);
 
       if (error) throw error;
 

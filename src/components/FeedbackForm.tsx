@@ -52,7 +52,7 @@ export const FeedbackForm = () => {
         .insert({
           user_id: user.id,
           ...validation.data
-        });
+        } as any);
 
       if (error) throw error;
 

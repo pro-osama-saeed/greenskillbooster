@@ -56,7 +56,7 @@ const SuggestLesson = () => {
       const { error } = await supabase.from("lesson_suggestions").insert({
         user_id: user.id,
         ...validation.data
-      });
+      } as any);
 
       if (error) throw error;
 
