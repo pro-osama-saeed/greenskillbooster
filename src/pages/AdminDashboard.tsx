@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,7 +18,7 @@ import {
 } from "recharts";
 import { 
   Users, Activity, Award, TrendingUp, Calendar, 
-  Shield, CheckCircle, XCircle, Eye, EyeOff 
+  Shield, CheckCircle, XCircle, Eye, EyeOff, Search, Ban, UserX, Edit 
 } from "lucide-react";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--muted))'];
@@ -41,6 +42,11 @@ const AdminDashboard = () => {
     eventName: "",
     eventIcon: "🎉",
   });
+  const [userSearch, setUserSearch] = useState("");
+  const [users, setUsers] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [pointsAdjustment, setPointsAdjustment] = useState(0);
+  const [suspensionReason, setSuspensionReason] = useState("");
 
   useEffect(() => {
     checkAdminStatus();
@@ -148,6 +154,87 @@ const AdminDashboard = () => {
       toast.error("Failed to load dashboard data");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const searchUsers = async () => {
+    if (!userSearch.trim()) {
+      toast.error("Please enter a search term");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select(`
+          *,
+          user_stats(*),
+          user_achievements(*)
+        `)
+        .or(`username.ilike.%${userSearch}%,id.eq.${userSearch}`)
+        .limit(10);
+
+      if (error) throw error;
+
+      setUsers(data || []);
+      if (data?.length === 0) {
+        toast.info("No users found");
+      }
+    } catch (error) {
+      console.error("Error searching users:", error);
+      toast.error("Failed to search users");
+    }
+  };
+
+  const adjustUserPoints = async () => {
+    if (!selectedUser || pointsAdjustment === 0) {
+      toast.error("Please select a user and enter points adjustment");
+      return;
+    }
+
+    try {
+      const currentPoints = selectedUser.user_stats[0]?.total_points || 0;
+      const newPoints = Math.max(0, currentPoints + pointsAdjustment);
+
+      const { error } = await supabase
+        .from("user_stats")
+        .update({ total_points: newPoints })
+        .eq("user_id", selectedUser.id);
+
+      if (error) throw error;
+
+      toast.success(`Points adjusted: ${pointsAdjustment > 0 ? '+' : ''}${pointsAdjustment}`);
+      setPointsAdjustment(0);
+      searchUsers();
+    } catch (error) {
+      console.error("Error adjusting points:", error);
+      toast.error("Failed to adjust points");
+    }
+  };
+
+  const toggleUserSuspension = async (userId: string, currentlySuspended: boolean) => {
+    if (!currentlySuspended && !suspensionReason.trim()) {
+      toast.error("Please provide a suspension reason");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ 
+          suspended: !currentlySuspended,
+          suspension_reason: !currentlySuspended ? suspensionReason : null
+        })
+        .eq("id", userId);
+
+      if (error) throw error;
+
+      toast.success(`User ${!currentlySuspended ? 'suspended' : 'unsuspended'}`);
+      setSuspensionReason("");
+      searchUsers();
+    } catch (error) {
+      console.error("Error toggling suspension:", error);
+      toast.error("Failed to update user status");
     }
   };
 
@@ -284,9 +371,10 @@ const AdminDashboard = () => {
 
         {/* Tabs for different sections */}
         <Tabs defaultValue="analytics" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="moderation">Moderation</TabsTrigger>
+            <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="badges">Award Badges</TabsTrigger>
           </TabsList>
 
@@ -402,6 +490,148 @@ const AdminDashboard = () => {
                               >
                                 <XCircle className="h-4 w-4" />
                               </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>User Search & Management</CardTitle>
+                <CardDescription>Search for users and manage their accounts</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Search by username or user ID"
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && searchUsers()}
+                  />
+                  <Button onClick={searchUsers}>
+                    <Search className="h-4 w-4 mr-2" />
+                    Search
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  {users.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      Search for users to manage their accounts
+                    </p>
+                  ) : (
+                    users.map((user) => (
+                      <Card key={user.id}>
+                        <CardContent className="pt-6">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-semibold">{user.username}</h3>
+                                  {user.suspended && (
+                                    <Badge variant="destructive">
+                                      <Ban className="h-3 w-3 mr-1" />
+                                      Suspended
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground">ID: {user.id}</p>
+                                {user.suspension_reason && (
+                                  <p className="text-xs text-destructive">
+                                    Reason: {user.suspension_reason}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <div className="text-2xl font-bold">
+                                  {user.user_stats[0]?.total_points || 0}
+                                </div>
+                                <p className="text-xs text-muted-foreground">Total Points</p>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4 text-sm">
+                              <div>
+                                <p className="text-muted-foreground">Actions</p>
+                                <p className="font-semibold">
+                                  {user.user_stats[0]?.total_actions || 0}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">Streak</p>
+                                <p className="font-semibold">
+                                  {user.user_stats[0]?.current_streak || 0} days
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">Badges</p>
+                                <p className="font-semibold">
+                                  {user.user_achievements?.length || 0}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-3 pt-3 border-t">
+                              <div className="flex gap-2 items-end">
+                                <div className="flex-1">
+                                  <Label htmlFor={`points-${user.id}`}>Adjust Points</Label>
+                                  <Input
+                                    id={`points-${user.id}`}
+                                    type="number"
+                                    placeholder="Enter points (+ or -)"
+                                    value={selectedUser?.id === user.id ? pointsAdjustment : 0}
+                                    onChange={(e) => {
+                                      setSelectedUser(user);
+                                      setPointsAdjustment(parseInt(e.target.value) || 0);
+                                    }}
+                                  />
+                                </div>
+                                <Button
+                                  size="sm"
+                                  onClick={adjustUserPoints}
+                                  disabled={selectedUser?.id !== user.id || pointsAdjustment === 0}
+                                >
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Apply
+                                </Button>
+                              </div>
+
+                              {!user.suspended ? (
+                                <div className="space-y-2">
+                                  <Label htmlFor={`reason-${user.id}`}>Suspension Reason</Label>
+                                  <Textarea
+                                    id={`reason-${user.id}`}
+                                    placeholder="Enter reason for suspension"
+                                    value={suspensionReason}
+                                    onChange={(e) => setSuspensionReason(e.target.value)}
+                                    className="min-h-[60px]"
+                                  />
+                                  <Button
+                                    variant="destructive"
+                                    className="w-full"
+                                    onClick={() => toggleUserSuspension(user.id, false)}
+                                  >
+                                    <UserX className="h-4 w-4 mr-2" />
+                                    Suspend Account
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  className="w-full"
+                                  onClick={() => toggleUserSuspension(user.id, true)}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Unsuspend Account
+                                </Button>
+                              )}
                             </div>
                           </div>
                         </CardContent>

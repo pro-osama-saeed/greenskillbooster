@@ -226,6 +226,8 @@ export type Database = {
           created_at: string | null
           id: string
           is_public: boolean | null
+          suspended: boolean | null
+          suspension_reason: string | null
           updated_at: string | null
           username: string
         }
@@ -234,6 +236,8 @@ export type Database = {
           created_at?: string | null
           id: string
           is_public?: boolean | null
+          suspended?: boolean | null
+          suspension_reason?: string | null
           updated_at?: string | null
           username: string
         }
@@ -242,6 +246,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_public?: boolean | null
+          suspended?: boolean | null
+          suspension_reason?: string | null
           updated_at?: string | null
           username?: string
         }
