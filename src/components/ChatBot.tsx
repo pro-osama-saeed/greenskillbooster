@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageCircle, X } from 'lucide-react';
+import { Bot, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { ChatWindow } from './ChatWindow';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,7 +39,7 @@ export const ChatBot: React.FC = () => {
             <X className="h-3 w-3" />
           </button>
           <div className="flex items-start gap-2">
-            <MessageCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+            <Bot className="h-5 w-5 flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-sm">Hi! I'm GreenSkill Assistant</p>
               <p className="text-xs opacity-90 mt-1">
@@ -60,7 +60,7 @@ export const ChatBot: React.FC = () => {
         )}
         size="icon"
       >
-        <MessageCircle className="h-6 w-6" />
+        <Bot className="h-6 w-6" />
       </Button>
 
       {/* Chat Window */}
@@ -69,7 +69,7 @@ export const ChatBot: React.FC = () => {
           <div className="flex items-center justify-between p-4 border-b border-border bg-primary/5">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                <MessageCircle className="h-5 w-5 text-primary" />
+                <Bot className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <h3 className="font-semibold text-foreground">GreenSkill Assistant</h3>
