@@ -8,8 +8,21 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { GraduationCap, Languages, Code, Handshake } from "lucide-react";
+import { z } from "zod";
 
 type FormType = "educator" | "translator" | "developer" | "partner" | null;
+
+const involvementSchema = z.object({
+  full_name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
+  country: z.string().trim().max(100, "Country must be less than 100 characters").optional(),
+  organization: z.string().trim().max(200, "Organization must be less than 200 characters").optional(),
+  experience: z.string().trim().min(1, "Experience is required").max(1000, "Experience must be less than 1000 characters"),
+  motivation: z.string().trim().min(1, "Motivation is required").max(1000, "Motivation must be less than 1000 characters"),
+  availability: z.string().trim().max(200, "Availability must be less than 200 characters").optional(),
+  skills: z.string().trim().max(500, "Skills must be less than 500 characters").optional(),
+  portfolio_url: z.string().trim().url("Invalid URL").max(500, "URL must be less than 500 characters").optional().or(z.literal(""))
+});
 
 interface FormData {
   full_name: string;
@@ -74,6 +87,13 @@ export const GetInvolvedForms = () => {
       return;
     }
 
+    // Validate form data
+    const validation = involvementSchema.safeParse(formData);
+    if (!validation.success) {
+      toast.error(validation.error.errors[0].message);
+      return;
+    }
+
     setLoading(true);
     try {
       const { error } = await supabase
@@ -81,7 +101,7 @@ export const GetInvolvedForms = () => {
         .insert({
           user_id: user.id,
           role_type: activeForm,
-          ...formData
+          ...validation.data
         });
 
       if (error) throw error;

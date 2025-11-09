@@ -11,6 +11,15 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, Lightbulb } from "lucide-react";
+import { z } from "zod";
+
+const lessonSuggestionSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
+  description: z.string().trim().min(1, "Description is required").max(500, "Description must be less than 500 characters"),
+  category: z.enum(['solar', 'water', 'trees', 'waste', 'community', 'communication', 'energy'], {
+    errorMap: () => ({ message: "Please select a category" })
+  })
+});
 
 const SuggestLesson = () => {
   const navigate = useNavigate();
@@ -29,8 +38,15 @@ const SuggestLesson = () => {
       return;
     }
 
-    if (!title.trim() || !description.trim() || !category) {
-      toast.error("Please fill in all fields");
+    // Validate form data
+    const validation = lessonSuggestionSchema.safeParse({
+      title,
+      description,
+      category
+    });
+
+    if (!validation.success) {
+      toast.error(validation.error.errors[0].message);
       return;
     }
 
@@ -39,9 +55,7 @@ const SuggestLesson = () => {
     try {
       const { error } = await supabase.from("lesson_suggestions").insert({
         user_id: user.id,
-        title: title.trim(),
-        description: description.trim(),
-        category,
+        ...validation.data
       });
 
       if (error) throw error;
