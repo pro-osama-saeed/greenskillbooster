@@ -6,7 +6,6 @@ import { CropHealthDashboard } from "@/components/CropHealthDashboard";
 import { DidYouKnowBox } from "@/components/DidYouKnowBox";
 import { DisasterRiskBox } from "@/components/DisasterRiskBox";
 import { InteractiveMap } from "@/components/InteractiveMap";
-import { ChatBot } from "@/components/ChatBot";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const Dashboard = () => {
@@ -72,9 +71,6 @@ const Dashboard = () => {
           </div>
         </div>
       </section>
-      
-      {/* ChatBot Widget */}
-      <ChatBot />
     </div>
   );
 };

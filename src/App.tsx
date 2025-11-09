@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ProgressProvider } from "@/contexts/ProgressContext";
 import { LocationProvider } from "@/contexts/LocationContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ChatBot } from "@/components/ChatBot";
 import Index from "./pages/Index";
 import Lessons from "./pages/Lessons";
 import LessonDetail from "./pages/LessonDetail";
@@ -54,6 +55,7 @@ const App = () => (
                   <Route path="/impact" element={<Impact />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
+                <ChatBot />
               </BrowserRouter>
             </TooltipProvider>
           </LocationProvider>

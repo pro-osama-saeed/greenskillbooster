@@ -13,7 +13,6 @@ import { DidYouKnowBox } from "@/components/DidYouKnowBox";
 import { DisasterRiskBox } from "@/components/DisasterRiskBox";
 import { DragDropActivity } from "@/components/DragDropActivity";
 import { ChecklistActivity } from "@/components/ChecklistActivity";
-import { ChatBot } from "@/components/ChatBot";
 import { QuizQuestion, DragDropActivity as DragDropActivityType, ChecklistActivity as ChecklistActivityType } from "@/types/lesson";
 import { shuffleQuizQuestions, shuffleDragDropItems, shuffleChecklistItems } from "@/lib/quizUtils";
 
@@ -509,9 +508,6 @@ const LessonDetail = () => {
           </CardContent>
         </Card>
       </main>
-      
-      {/* ChatBot Widget */}
-      <ChatBot />
     </div>
   );
 };

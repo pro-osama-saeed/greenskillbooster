@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Camera, Upload, Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Header } from '@/components/Header';
 import { z } from 'zod';
@@ -25,9 +25,6 @@ const ACTION_CATEGORIES = [
   { value: 'other', label: '🌍 Other' }
 ];
 
-// File validation constants
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB (input limit, images will be compressed)
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
 
 // Validation schema
 const actionSchema = z.object({
@@ -44,11 +41,7 @@ export default function TrackAction() {
   const [category, setCategory] = useState('');
   const [story, setStory] = useState('');
   const [isPublic, setIsPublic] = useState(true);
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
-  const [compressing, setCompressing] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -70,120 +63,6 @@ export default function TrackAction() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Image compression utility
-  const compressImage = async (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      
-      reader.onload = (e) => {
-        const img = new Image();
-        img.src = e.target?.result as string;
-        
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d')!;
-          
-          // Calculate new dimensions (max 1920x1080)
-          let width = img.width;
-          let height = img.height;
-          const MAX_WIDTH = 1920;
-          const MAX_HEIGHT = 1080;
-          
-          if (width > MAX_WIDTH || height > MAX_HEIGHT) {
-            const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
-            width = width * ratio;
-            height = height * ratio;
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          // Compress to blob then convert to file
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                const compressedFile = new File(
-                  [blob],
-                  file.name,
-                  { type: file.type === 'image/png' ? 'image/png' : 'image/jpeg', lastModified: Date.now() }
-                );
-                resolve(compressedFile);
-              } else {
-                reject(new Error('Compression failed'));
-              }
-            },
-            file.type === 'image/png' ? 'image/png' : 'image/jpeg',
-            0.85 // 85% quality
-          );
-        };
-        
-        img.onerror = () => reject(new Error('Failed to load image'));
-      };
-      
-      reader.onerror = () => reject(new Error('Failed to read file'));
-    });
-  };
-
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file size
-      if (file.size > MAX_FILE_SIZE) {
-        toast.error('Image too large. Maximum size is 5MB');
-        e.target.value = '';
-        return;
-      }
-
-      // Validate file type
-      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-        toast.error('Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed');
-        e.target.value = '';
-        return;
-      }
-
-      try {
-        setCompressing(true);
-        toast.info('Compressing image...');
-        
-        const originalSize = (file.size / 1024 / 1024).toFixed(2);
-        const compressedFile = await compressImage(file);
-        const compressedSize = (compressedFile.size / 1024 / 1024).toFixed(2);
-        
-        setPhoto(compressedFile);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setPhotoPreview(reader.result as string);
-        };
-        reader.readAsDataURL(compressedFile);
-        
-        toast.success(`Image compressed: ${originalSize}MB → ${compressedSize}MB`);
-      } catch (error) {
-        toast.error('Failed to compress image. Please try another file.');
-        e.target.value = '';
-      } finally {
-        setCompressing(false);
-      }
-    }
-  };
-
-  const uploadFile = async (file: File, bucket: string, folder: string) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${folder}/${user!.id}/${Date.now()}.${fileExt}`;
-    
-    const { error, data } = await supabase.storage
-      .from(bucket)
-      .upload(fileName, file);
-
-    if (error) throw error;
-    
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(fileName);
-    
-    return publicUrl;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -220,12 +99,6 @@ export default function TrackAction() {
 
       // Refresh session to ensure we have a valid token
       await refreshSession();
-      let photoUrl = null;
-
-      // Upload photo if exists
-      if (photo) {
-        photoUrl = await uploadFile(photo, 'action-photos', 'photos');
-      }
 
       // Insert action
       const { error } = await supabase
@@ -234,7 +107,6 @@ export default function TrackAction() {
           user_id: user!.id,
           category: category as any,
           story: story || null,
-          photo_url: photoUrl,
           latitude: location?.latitude || null,
           longitude: location?.longitude || null,
           country: location?.country || null,
@@ -330,47 +202,6 @@ export default function TrackAction() {
                 <p className="text-xs text-muted-foreground">
                   {story.length}/1000 characters
                 </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Photo (optional)</Label>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Images are automatically compressed for faster upload
-                </p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoChange}
-                  className="hidden"
-                  disabled={compressing}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full"
-                  disabled={compressing}
-                >
-                  {compressing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Compressing...
-                    </>
-                  ) : (
-                    <>
-                      <Camera className="w-4 h-4 mr-2" />
-                      {photo ? 'Change Photo' : 'Upload Photo'}
-                    </>
-                  )}
-                </Button>
-                {photoPreview && (
-                  <img
-                    src={photoPreview}
-                    alt="Preview"
-                    className="w-full h-48 object-cover rounded-lg mt-2"
-                  />
-                )}
               </div>
 
               <div className="flex items-center justify-between">
