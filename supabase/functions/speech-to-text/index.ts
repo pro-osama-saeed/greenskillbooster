@@ -59,7 +59,7 @@ serve(async (req) => {
     // Prepare form data
     const formData = new FormData();
     const blob = new Blob([binaryAudio], { type: 'audio/webm' });
-    formData.append('audio', blob, 'audio.webm');
+    formData.append('file', blob, 'audio.webm'); // ElevenLabs expects 'file' parameter
     formData.append('model_id', 'eleven_multilingual_v2');
 
     // Map language codes to ElevenLabs format
