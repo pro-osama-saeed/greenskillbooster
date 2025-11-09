@@ -16,8 +16,12 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   const { toast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [volumeLevel, setVolumeLevel] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   const startRecording = async () => {
     try {
@@ -25,6 +29,30 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
+
+      // Set up audio analysis for volume visualization
+      audioContextRef.current = new AudioContext();
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      analyserRef.current.fftSize = 256;
+      source.connect(analyserRef.current);
+
+      // Start volume level animation
+      const updateVolume = () => {
+        if (!analyserRef.current) return;
+
+        const bufferLength = analyserRef.current.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyserRef.current.getByteFrequencyData(dataArray);
+
+        // Calculate average volume level (0-100)
+        const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+        const normalizedVolume = Math.min(100, (average / 255) * 150);
+        setVolumeLevel(normalizedVolume);
+
+        animationFrameRef.current = requestAnimationFrame(updateVolume);
+      };
+      updateVolume();
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
@@ -36,8 +64,17 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
         const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
         await processAudio(audioBlob);
         
-        // Stop all tracks
+        // Stop all tracks and cleanup
         stream.getTracks().forEach(track => track.stop());
+        
+        // Cleanup audio context
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
+        if (audioContextRef.current) {
+          audioContextRef.current.close();
+        }
+        setVolumeLevel(0);
       };
 
       mediaRecorder.start();
@@ -96,7 +133,7 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-3">
       <Button
         type="button"
         variant={isRecording ? 'destructive' : 'outline'}
@@ -118,11 +155,54 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
         )}
       </Button>
       
+      {/* Audio Waveform Visualization */}
       {isRecording && (
-        <div className="flex gap-1">
-          <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
-          <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" style={{ animationDelay: '150ms' }} />
-          <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" style={{ animationDelay: '300ms' }} />
+        <div className="space-y-2 animate-fade-in">
+          {/* Volume Level Bars */}
+          <div className="flex items-center justify-center gap-1 h-12">
+            {[...Array(20)].map((_, index) => {
+              // Create waveform effect - bars in center are taller
+              const centerDistance = Math.abs(index - 10);
+              const baseHeight = 100 - (centerDistance * 5);
+              const heightMultiplier = volumeLevel / 100;
+              const barHeight = Math.max(8, baseHeight * heightMultiplier);
+              
+              return (
+                <div
+                  key={index}
+                  className="w-1 bg-gradient-to-t from-destructive to-destructive/50 rounded-full transition-all duration-75"
+                  style={{
+                    height: `${barHeight}%`,
+                    animationDelay: `${index * 50}ms`,
+                  }}
+                />
+              );
+            })}
+          </div>
+          
+          {/* Volume Indicator */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Volume Level</span>
+              <span>{Math.round(volumeLevel)}%</span>
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 transition-all duration-150 rounded-full"
+                style={{ width: `${volumeLevel}%` }}
+              />
+            </div>
+          </div>
+          
+          {/* Recording Indicator */}
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <div className="flex gap-1">
+              <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+              <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" style={{ animationDelay: '150ms' }} />
+              <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" style={{ animationDelay: '300ms' }} />
+            </div>
+            <span>Recording in progress...</span>
+          </div>
         </div>
       )}
     </div>
