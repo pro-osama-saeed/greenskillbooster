@@ -12,6 +12,7 @@ import Lessons from "./pages/Lessons";
 import LessonDetail from "./pages/LessonDetail";
 import SuggestLesson from "./pages/SuggestLesson";
 import AdminSuggestions from "./pages/AdminSuggestions";
+import AdminDashboard from "./pages/AdminDashboard";
 import Badges from "./pages/Badges";
 import Leaderboard from "./pages/Leaderboard";
 import About from "./pages/About";
@@ -42,6 +43,7 @@ const App = () => (
                   <Route path="/lesson/:id" element={<LessonDetail />} />
                   <Route path="/suggest-lesson" element={<SuggestLesson />} />
                   <Route path="/admin/suggestions" element={<AdminSuggestions />} />
+                  <Route path="/admin/dashboard" element={<AdminDashboard />} />
                   <Route path="/badges" element={<Badges />} />
                   <Route path="/leaderboard" element={<Leaderboard />} />
                   <Route path="/about" element={<About />} />

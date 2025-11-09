@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
-import { Leaf, Menu, User, LogOut, Globe } from "lucide-react";
+import { Leaf, Menu, User, LogOut, Globe, Shield } from "lucide-react";
 import { Button } from "./ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { LANGUAGES } from "@/i18n/translations";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 import type { Language } from "@/i18n/translations";
 import {
   Select,
@@ -27,6 +29,32 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 export const Header = () => {
   const { language, setLanguage, t } = useLanguage();
   const { user, signOut } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .maybeSingle();
+
+        setIsAdmin(!!data);
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [user]);
 
   const NavLinks = () => (
     <>
@@ -51,6 +79,14 @@ export const Header = () => {
       <Link to="/resources">
         <Button variant="ghost">{t("resources")}</Button>
       </Link>
+      {isAdmin && (
+        <Link to="/admin/dashboard">
+          <Button variant="outline" className="gap-2">
+            <Shield className="h-4 w-4" />
+            <span>Admin</span>
+          </Button>
+        </Link>
+      )}
     </>
   );
 
