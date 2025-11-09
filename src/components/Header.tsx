@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
-import { Leaf, Menu, User, LogOut } from "lucide-react";
+import { Leaf, Menu, User, LogOut, Globe } from "lucide-react";
 import { Button } from "./ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { LANGUAGES } from "@/i18n/translations";
+import type { Language } from "@/i18n/translations";
 import {
   Select,
   SelectContent,
@@ -15,6 +17,12 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const Header = () => {
   const { language, setLanguage, t } = useLanguage();
@@ -60,18 +68,38 @@ export const Header = () => {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Select value={language} onValueChange={(value: any) => setLanguage(value)}>
-            <SelectTrigger className="w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="en">English</SelectItem>
-              <SelectItem value="es">Español</SelectItem>
-              <SelectItem value="fr">Français</SelectItem>
-              <SelectItem value="sw">Kiswahili</SelectItem>
-              <SelectItem value="hi">हिन्दी</SelectItem>
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Globe className="h-4 w-4" />
+                <span className="hidden md:inline">{LANGUAGES[language].flag} {LANGUAGES[language].nativeName}</span>
+                <span className="md:hidden">{LANGUAGES[language].flag}</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64" align="end">
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm mb-3">Choose Language</h4>
+                <ScrollArea className="h-[300px] pr-4">
+                  <div className="space-y-1">
+                    {(Object.entries(LANGUAGES) as [Language, typeof LANGUAGES[Language]][]).map(([code, lang]) => (
+                      <Button
+                        key={code}
+                        variant={language === code ? "secondary" : "ghost"}
+                        className="w-full justify-start gap-2"
+                        onClick={() => setLanguage(code)}
+                      >
+                        <span className="text-lg">{lang.flag}</span>
+                        <div className="flex flex-col items-start">
+                          <span className="font-medium">{lang.nativeName}</span>
+                          <span className="text-xs text-muted-foreground">{lang.name}</span>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            </PopoverContent>
+          </Popover>
 
           {user ? (
             <div className="hidden md:flex items-center gap-2">
