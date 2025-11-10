@@ -55,8 +55,11 @@ const App = () => (
                   <Route path="/track-action" element={<TrackAction />} />
                   <Route path="/community" element={<Community />} />
                   <Route path="/impact" element={<Impact />} />
-                  <Route path="/challenges" element={<Challenges />} />
-                  <Route path="/teams" element={<Teams />} />
+            <Route path="/challenges" element={<Challenges />} />
+            <Route path="/teams" element={<Teams />} />
+            <Route path="/forums" element={<Forums />} />
+            <Route path="/forums/:forumId/posts/:postId" element={<ForumPost />} />
+            <Route path="/profile/:userId" element={<UserProfile />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
                 <ChatBot />
