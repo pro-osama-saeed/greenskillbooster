@@ -8,6 +8,7 @@ import { Loader2, MapPin, Volume2, Filter } from 'lucide-react';
 import { Header } from '@/components/Header';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
 interface ClimateAction {
   id: string;
@@ -45,6 +46,8 @@ export default function Community() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
+  
+  useKeyboardShortcuts();
 
   useEffect(() => {
     fetchActions();

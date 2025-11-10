@@ -12,6 +12,9 @@ import { lessons } from "@/data/lessons";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { generateCertificate } from "@/components/CertificateGenerator";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { LoadingCard } from "@/components/LoadingCard";
 
 interface Achievement {
   id: string;
@@ -32,6 +35,8 @@ const Badges = () => {
   const [loading, setLoading] = useState(true);
   const [selectedBadge, setSelectedBadge] = useState<Achievement | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  useKeyboardShortcuts();
 
   useEffect(() => {
     if (user) {
@@ -72,10 +77,33 @@ const Badges = () => {
     }
   };
 
-  const handleDownloadCertificate = () => {
-    toast.success("Certificate downloaded", {
-      description: "Your climate skills certificate has been saved!",
-    });
+  const handleDownloadCertificate = async () => {
+    if (!user || !userStats) return;
+
+    try {
+      // Fetch profile for username
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single();
+
+      generateCertificate({
+        username: profile?.username || 'Climate Champion',
+        totalPoints: userStats.total_points || 0,
+        badges: progress.badges,
+        completedLessons: progress.completedLessons.length,
+        currentStreak: userStats.current_streak || 0,
+        totalActions: userStats.total_actions || 0,
+      });
+
+      toast.success("Certificate downloaded", {
+        description: "Your climate skills certificate has been saved!",
+      });
+    } catch (error) {
+      console.error('Error generating certificate:', error);
+      toast.error("Failed to generate certificate");
+    }
   };
 
   const handleBadgeClick = (badge: Achievement) => {
@@ -113,6 +141,29 @@ const Badges = () => {
               </Button>
             </CardContent>
           </Card>
+        </main>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container py-8">
+          <div className="space-y-8">
+            <div>
+              <h1 className="text-4xl font-bold text-foreground mb-2">{t("badges")}</h1>
+              <p className="text-muted-foreground text-lg">
+                Your achievements, milestones, and certificates
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <LoadingCard key={i} />
+              ))}
+            </div>
+          </div>
         </main>
       </div>
     );

@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProgress } from "@/contexts/ProgressContext";
 import { lessons } from "@/data/lessons";
-import { CheckCircle2, Volume2, ArrowLeft, Loader2, Pause, Square, RefreshCw } from "lucide-react";
+import { CheckCircle2, Volume2, ArrowLeft, Loader2, Pause, Square, RefreshCw, Award } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { supabase } from "@/integrations/supabase/client";
 import { DidYouKnowBox } from "@/components/DidYouKnowBox";
 import { DisasterRiskBox } from "@/components/DisasterRiskBox";
@@ -38,6 +39,10 @@ const LessonDetail = () => {
   const [randomizedQuiz, setRandomizedQuiz] = useState<QuizQuestion[] | null>(null);
   const [randomizedDragDrop, setRandomizedDragDrop] = useState<DragDropActivityType | null>(null);
   const [randomizedChecklist, setRandomizedChecklist] = useState<ChecklistActivityType | null>(null);
+  const [quizScore, setQuizScore] = useState(0);
+  const [quizAnswers, setQuizAnswers] = useState<boolean[]>([]);
+
+  useKeyboardShortcuts();
 
   const lesson = lessons.find((l) => l.id === id);
 
@@ -113,6 +118,8 @@ const LessonDetail = () => {
     setShowDragDrop(false);
     setShowChecklist(false);
     setActivitiesCompleted({ dragDrop: false, checklist: false });
+    setQuizScore(0);
+    setQuizAnswers([]);
     
     // Generate new randomized content
     if (lesson) {
@@ -139,8 +146,13 @@ const LessonDetail = () => {
     const quiz = randomizedQuiz || lesson.quiz!;
     const currentQuestion = quiz[quizIndex];
     const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+    
+    // Track answer
+    const newAnswers = [...quizAnswers, isCorrect];
+    setQuizAnswers(newAnswers);
 
     if (isCorrect) {
+      setQuizScore(quizScore + 1);
       toast.success("Correct! 🎉", {
         description: "Great job! Keep going!",
       });
@@ -151,15 +163,23 @@ const LessonDetail = () => {
       } else {
         setQuizCompleted(true);
         setShowQuiz(false);
-        toast.success("Quiz completed! Amazing work!", {
-          description: "You've mastered this lesson content.",
+        
+        // Calculate score percentage
+        const finalScore = ((quizScore + 1) / quiz.length) * 100;
+        const bonusPoints = finalScore === 100 ? 50 : finalScore >= 80 ? 25 : 0;
+        
+        toast.success(`Quiz completed! Score: ${Math.round(finalScore)}%`, {
+          description: bonusPoints > 0 
+            ? `Perfect! Bonus: +${bonusPoints} points! 🎉` 
+            : "You've finished the quiz!",
         });
         handleComplete();
       }
     } else {
       toast.error("Not quite right!", {
-        description: "Think about it and try again. You can do it!",
+        description: "The correct answer is: " + currentQuestion.options[currentQuestion.correctAnswer],
       });
+      setSelectedAnswer(null);
     }
   };
 
@@ -312,10 +332,23 @@ const LessonDetail = () => {
         <main className="container py-8 max-w-3xl">
           <Card>
             <CardHeader>
-              <CardTitle>{t("quiz")}</CardTitle>
-              <p className="text-muted-foreground">
-                Question {quizIndex + 1} of {quiz.length}
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="h-5 w-5 text-primary" />
+                    {t("quiz")}
+                  </CardTitle>
+                  <p className="text-muted-foreground mt-1">
+                    Question {quizIndex + 1} of {quiz.length}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Score</p>
+                  <p className="text-2xl font-bold text-primary">
+                    {quizScore}/{quizIndex}
+                  </p>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>

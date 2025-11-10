@@ -11,10 +11,13 @@ import { lessons } from "@/data/lessons";
 import { WeatherCard } from "@/components/WeatherCard";
 import { DidYouKnowBox } from "@/components/DidYouKnowBox";
 import { TrackActionButton } from "@/components/TrackActionButton";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 const Index = () => {
   const { t } = useLanguage();
   const { progress } = useProgress();
+  
+  useKeyboardShortcuts();
 
   return (
     <div className="min-h-screen bg-background">

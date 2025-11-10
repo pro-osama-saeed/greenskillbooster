@@ -7,9 +7,13 @@ import { DidYouKnowBox } from "@/components/DidYouKnowBox";
 import { DisasterRiskBox } from "@/components/DisasterRiskBox";
 import { InteractiveMap } from "@/components/InteractiveMap";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { KeyboardShortcutsInfo } from "@/components/KeyboardShortcutsInfo";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 const Dashboard = () => {
   const { t } = useLanguage();
+  
+  useKeyboardShortcuts();
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,6 +50,9 @@ const Dashboard = () => {
 
           {/* Bottom Row - Did You Know */}
           <DidYouKnowBox />
+
+          {/* Keyboard Shortcuts */}
+          <KeyboardShortcutsInfo />
 
           {/* Info Section */}
           <div className="mt-8 p-6 rounded-lg bg-gradient-card border border-primary/10">
