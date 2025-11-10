@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Leaf, Menu, User, LogOut, Globe, Shield } from "lucide-react";
+import { Leaf, Menu, User, LogOut, Globe, Shield, UserCircle, BarChart } from "lucide-react";
 import { Button } from "./ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,6 +24,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { NotificationsCenter } from "./NotificationsCenter";
 
@@ -149,14 +157,34 @@ export const Header = () => {
           {user ? (
             <div className="hidden md:flex items-center gap-2">
               <NotificationsCenter />
-              <Link to="/impact">
-                <Button variant="ghost" size="icon">
-                  <User className="h-5 w-5" />
-                </Button>
-              </Link>
-              <Button variant="ghost" size="icon" onClick={signOut}>
-                <LogOut className="h-5 w-5" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to={`/profile/${user.id}`} className="w-full cursor-pointer">
+                      <UserCircle className="h-4 w-4 mr-2" />
+                      My Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/impact" className="w-full cursor-pointer">
+                      <BarChart className="h-4 w-4 mr-2" />
+                      My Impact
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut} className="cursor-pointer">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
             <Link to="/auth" className="hidden md:block">
@@ -174,6 +202,37 @@ export const Header = () => {
             <SheetContent>
               <nav className="flex flex-col gap-4 mt-8">
                 <NavLinks />
+                {user && (
+                  <>
+                    <Link to={`/profile/${user.id}`}>
+                      <Button variant="ghost" className="w-full justify-start">
+                        <UserCircle className="h-5 w-5 mr-2" />
+                        My Profile
+                      </Button>
+                    </Link>
+                    <Link to="/impact">
+                      <Button variant="ghost" className="w-full justify-start">
+                        <BarChart className="h-5 w-5 mr-2" />
+                        My Impact
+                      </Button>
+                    </Link>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start" 
+                      onClick={signOut}
+                    >
+                      <LogOut className="h-5 w-5 mr-2" />
+                      Sign Out
+                    </Button>
+                  </>
+                )}
+                {!user && (
+                  <Link to="/auth">
+                    <Button variant="outline" className="w-full">
+                      Sign In
+                    </Button>
+                  </Link>
+                )}
               </nav>
             </SheetContent>
           </Sheet>

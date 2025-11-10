@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -9,11 +10,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, ArrowLeft, MapPin, Calendar, Award, Flame, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { EditProfileDialog } from '@/components/EditProfileDialog';
 
 interface UserProfile {
   id: string;
   username: string;
   avatar_url: string;
+  city: string | null;
+  country: string | null;
   created_at: string;
 }
 
@@ -45,11 +49,14 @@ interface ClimateAction {
 export default function UserProfile() {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [actions, setActions] = useState<ClimateAction[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const isOwnProfile = user?.id === userId;
 
   useEffect(() => {
     if (userId) {
@@ -133,12 +140,26 @@ export default function UserProfile() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <h1 className="text-3xl font-bold mb-2">{profile.username}</h1>
+                <div className="flex items-center justify-between mb-2">
+                  <h1 className="text-3xl font-bold">{profile.username}</h1>
+                  {isOwnProfile && (
+                    <EditProfileDialog 
+                      currentProfile={profile}
+                      onProfileUpdated={fetchUserData}
+                    />
+                  )}
+                </div>
                 <div className="flex items-center gap-4 text-muted-foreground mb-4">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
                     Joined {formatDistanceToNow(new Date(profile.created_at), { addSuffix: true })}
                   </span>
+                  {(profile.city || profile.country) && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-4 h-4" />
+                      {[profile.city, profile.country].filter(Boolean).join(', ')}
+                    </span>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-3 bg-secondary rounded-lg">
