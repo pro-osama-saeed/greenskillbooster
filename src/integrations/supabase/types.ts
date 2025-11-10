@@ -307,7 +307,9 @@ export type Database = {
           forum_id: string
           id: string
           is_pinned: boolean | null
+          last_activity_at: string | null
           title: string
+          trending_score: number | null
           updated_at: string
           user_id: string
           view_count: number | null
@@ -320,7 +322,9 @@ export type Database = {
           forum_id: string
           id?: string
           is_pinned?: boolean | null
+          last_activity_at?: string | null
           title: string
+          trending_score?: number | null
           updated_at?: string
           user_id: string
           view_count?: number | null
@@ -333,7 +337,9 @@ export type Database = {
           forum_id?: string
           id?: string
           is_pinned?: boolean | null
+          last_activity_at?: string | null
           title?: string
+          trending_score?: number | null
           updated_at?: string
           user_id?: string
           view_count?: number | null
@@ -580,6 +586,48 @@ export type Database = {
           },
         ]
       }
+      post_recommendations: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          reason: string | null
+          recommendation_score: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          reason?: string | null
+          recommendation_score?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          reason?: string | null
+          recommendation_score?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_recommendations_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "forum_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_recommendations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_tags: {
         Row: {
           created_at: string
@@ -612,6 +660,45 @@ export type Database = {
             columns: ["tag_id"]
             isOneToOne: false
             referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_view_history: {
+        Row: {
+          id: string
+          post_id: string
+          session_id: string | null
+          user_id: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          session_id?: string | null
+          user_id?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          session_id?: string | null
+          user_id?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_view_history_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "forum_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_view_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -937,6 +1024,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_interests: {
+        Row: {
+          created_at: string | null
+          id: string
+          interest_score: number | null
+          last_interaction_at: string | null
+          tag_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          interest_score?: number | null
+          last_interaction_at?: string | null
+          tag_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          interest_score?: number | null
+          last_interaction_at?: string | null
+          tag_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_interests_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_interests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -1013,9 +1142,38 @@ export type Database = {
         Args: { p_event_icon: string; p_event_name: string; p_user_id: string }
         Returns: undefined
       }
+      calculate_trending_score: { Args: { p_post_id: string }; Returns: number }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       get_admin_stats: { Args: never; Returns: Json }
       get_content_stats: { Args: { days?: number }; Returns: Json }
+      get_recommended_posts: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          content: string
+          created_at: string
+          forum_id: string
+          id: string
+          recommendation_reason: string
+          title: string
+          user_id: string
+          views: number
+        }[]
+      }
+      get_trending_posts: {
+        Args: { p_forum_id?: string; p_limit?: number }
+        Returns: {
+          comment_count: number
+          content: string
+          created_at: string
+          forum_id: string
+          id: string
+          reaction_count: number
+          title: string
+          trending_score: number
+          user_id: string
+          views: number
+        }[]
+      }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
@@ -1076,6 +1234,7 @@ export type Database = {
         Args: { p_moderator_id?: string; p_user_id: string }
         Returns: undefined
       }
+      update_trending_scores: { Args: never; Returns: undefined }
     }
     Enums: {
       action_category:

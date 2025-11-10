@@ -12,6 +12,8 @@ import { formatDistanceToNow } from 'date-fns';
 import CommentSection from '@/components/CommentSection';
 import ReactionBar from '@/components/ReactionBar';
 import ReportButton from '@/components/ReportButton';
+import BookmarkButton from '@/components/BookmarkButton';
+import RelatedPosts from '@/components/RelatedPosts';
 
 interface ForumPost {
   id: string;
@@ -86,6 +88,14 @@ export default function ForumPost() {
 
   const incrementViews = async () => {
     await supabase.rpc('increment_post_views', { post_id: postId });
+    
+    // Track view for recommendations (if user is logged in)
+    if (user && postId) {
+      await supabase.from('post_view_history').insert({
+        post_id: postId,
+        user_id: user.id
+      });
+    }
   };
 
   if (loading) {
@@ -99,7 +109,7 @@ export default function ForumPost() {
   if (!post) return null;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
       <Button 
         variant="ghost" 
         onClick={() => navigate('/forums')}
@@ -109,74 +119,89 @@ export default function ForumPost() {
         Back to Forums
       </Button>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Avatar>
-                <AvatarImage src={post.profiles.avatar_url} />
-                <AvatarFallback>{post.profiles.username[0]?.toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-medium">{post.profiles.username}</div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="w-3 h-3" />
-                  {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                  <span>•</span>
-                  <Eye className="w-3 h-3" />
-                  {post.views} views
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card className="mb-6">
+            <CardHeader>
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <Avatar>
+                    <AvatarImage src={post.profiles.avatar_url} />
+                    <AvatarFallback>{post.profiles.username[0]?.toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-medium">{post.profiles.username}</div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="w-3 h-3" />
+                      {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                      <span>•</span>
+                      <Eye className="w-3 h-3" />
+                      {post.views} views
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {post.is_pinned && (
+                    <Badge variant="default">Pinned</Badge>
+                  )}
+                  <BookmarkButton postId={post.id} />
                 </div>
               </div>
-            </div>
-            {post.is_pinned && (
-              <Badge variant="default">Pinned</Badge>
-            )}
-          </div>
-          <CardTitle className="text-2xl">{post.title}</CardTitle>
-          {post.tags && post.tags.length > 0 && (
-            <div className="flex gap-2 flex-wrap mt-3">
-              {post.tags.map((tag) => (
-                <Badge 
-                  key={tag.id} 
-                  style={{ backgroundColor: tag.color, color: 'white' }}
-                >
-                  {tag.name}
-                </Badge>
-              ))}
-            </div>
-          )}
-        </CardHeader>
-        <CardContent>
-          {post.media && post.media.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              {post.media.map((item, idx) => (
-                <div key={idx} className="space-y-2">
-                  <img
-                    src={item.url}
-                    alt={item.caption || `Media ${idx + 1}`}
-                    className="w-full h-64 object-cover rounded-lg"
-                  />
-                  {item.caption && (
-                    <p className="text-sm text-muted-foreground italic">{item.caption}</p>
-                  )}
+              <CardTitle className="text-2xl">{post.title}</CardTitle>
+              {post.tags && post.tags.length > 0 && (
+                <div className="flex gap-2 flex-wrap mt-3">
+                  {post.tags.map((tag) => (
+                    <Badge 
+                      key={tag.id} 
+                      style={{ backgroundColor: tag.color, color: 'white' }}
+                    >
+                      {tag.name}
+                    </Badge>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-          
-          <div 
-            className="prose prose-sm max-w-none mb-4"
-            dangerouslySetInnerHTML={{ __html: post.content_html || post.content }}
-          />
-          
-          <div className="flex items-center justify-between border-t pt-4">
-            <ReactionBar parentType="forum_post" parentId={post.id} />
-            <ReportButton reportedType="post" reportedId={post.id} />
-          </div>
-        </CardContent>
-      </Card>
+              )}
+            </CardHeader>
+            <CardContent>
+              {post.media && post.media.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  {post.media.map((item, idx) => (
+                    <div key={idx} className="space-y-2">
+                      <img
+                        src={item.url}
+                        alt={item.caption || `Media ${idx + 1}`}
+                        className="w-full h-64 object-cover rounded-lg"
+                      />
+                      {item.caption && (
+                        <p className="text-sm text-muted-foreground italic">{item.caption}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <div 
+                className="prose prose-sm max-w-none mb-4"
+                dangerouslySetInnerHTML={{ __html: post.content_html || post.content }}
+              />
+              
+              <div className="flex items-center justify-between border-t pt-4">
+                <ReactionBar parentType="forum_post" parentId={post.id} />
+                <ReportButton reportedType="post" reportedId={post.id} />
+              </div>
+            </CardContent>
+          </Card>
 
-      <CommentSection parentType="forum_post" parentId={post.id} />
+          <CommentSection parentType="forum_post" parentId={post.id} />
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          <RelatedPosts 
+            postId={post.id} 
+            tags={post.tags?.map(t => t.name) || []} 
+          />
+        </div>
+      </div>
     </div>
   );
 }

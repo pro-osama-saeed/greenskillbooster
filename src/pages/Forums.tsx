@@ -15,6 +15,9 @@ import RichTextEditor from '@/components/RichTextEditor';
 import MediaUpload from '@/components/MediaUpload';
 import TagSelector from '@/components/TagSelector';
 import ForumSearch from '@/components/ForumSearch';
+import TrendingPosts from '@/components/TrendingPosts';
+import RecommendedPosts from '@/components/RecommendedPosts';
+import BookmarkedPosts from '@/components/BookmarkedPosts';
 
 interface Forum {
   id: string;
@@ -251,24 +254,34 @@ export default function Forums() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">Community Forums</h1>
         <p className="text-muted-foreground">Connect, share, and learn with fellow climate activists</p>
       </div>
 
-      <Tabs defaultValue="forums" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="forums">Forums</TabsTrigger>
-          <TabsTrigger value="search">Search</TabsTrigger>
-        </TabsList>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Tabs defaultValue="forums" className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="forums">Forums</TabsTrigger>
+              <TabsTrigger value="search">Search</TabsTrigger>
+              <TabsTrigger value="bookmarks">
+                <Bookmark className="w-4 h-4 mr-2" />
+                Saved
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="search">
-          <ForumSearch />
-        </TabsContent>
+            <TabsContent value="search">
+              <ForumSearch />
+            </TabsContent>
 
-        <TabsContent value="forums">
-          {!selectedForum ? (
+            <TabsContent value="bookmarks">
+              <BookmarkedPosts />
+            </TabsContent>
+
+            <TabsContent value="forums">
+              {!selectedForum ? (
             <div className="grid gap-4 md:grid-cols-2">
               {forums.map((forum) => (
                 <Card 
@@ -462,8 +475,16 @@ export default function Forums() {
               )}
             </div>
           )}
-        </TabsContent>
-      </Tabs>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          <TrendingPosts forumId={selectedForum || undefined} limit={5} />
+          <RecommendedPosts limit={5} />
+        </div>
+      </div>
     </div>
   );
 }
