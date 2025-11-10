@@ -511,6 +511,48 @@ export type Database = {
           },
         ]
       }
+      user_goals: {
+        Row: {
+          category: string | null
+          completed: boolean
+          created_at: string | null
+          current_value: number
+          goal_type: string
+          id: string
+          period_end: string
+          period_start: string
+          target_value: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          completed?: boolean
+          created_at?: string | null
+          current_value?: number
+          goal_type: string
+          id?: string
+          period_end: string
+          period_start: string
+          target_value: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          completed?: boolean
+          created_at?: string | null
+          current_value?: number
+          goal_type?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          target_value?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
