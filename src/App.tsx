@@ -14,6 +14,7 @@ import LessonDetail from "./pages/LessonDetail";
 import SuggestLesson from "./pages/SuggestLesson";
 import AdminSuggestions from "./pages/AdminSuggestions";
 import AdminDashboard from "./pages/AdminDashboard";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import Badges from "./pages/Badges";
 import Leaderboard from "./pages/Leaderboard";
 import About from "./pages/About";
@@ -51,8 +52,16 @@ const App = () => (
   <Route path="/lessons" element={<Lessons />} />
                   <Route path="/lesson/:id" element={<LessonDetail />} />
                   <Route path="/suggest-lesson" element={<SuggestLesson />} />
-                  <Route path="/admin/suggestions" element={<AdminSuggestions />} />
-                  <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                  <Route path="/admin/suggestions" element={
+                    <ProtectedRoute requiredRoles={['admin', 'co_admin']}>
+                      <AdminSuggestions />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/dashboard" element={
+                    <ProtectedRoute requiredRoles={['admin', 'co_admin']}>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/badges" element={<Badges />} />
                   <Route path="/leaderboard" element={<Leaderboard />} />
                   <Route path="/about" element={<About />} />
@@ -66,9 +75,21 @@ const App = () => (
             <Route path="/forums" element={<Forums />} />
             <Route path="/forums/:forumId/posts/:postId" element={<ForumPost />} />
             <Route path="/profile/:userId" element={<UserProfile />} />
-            <Route path="/admin/moderation" element={<AdminModeration />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            <Route path="/admin/moderation" element={
+              <ProtectedRoute requiredRoles={['admin', 'co_admin']}>
+                <AdminModeration />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/users" element={
+              <ProtectedRoute requiredRoles={['admin', 'co_admin']}>
+                <AdminUsers />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/analytics" element={
+              <ProtectedRoute requiredRoles={['admin', 'co_admin']}>
+                <AdminAnalytics />
+              </ProtectedRoute>
+            } />
             <Route path="*" element={<NotFound />} />
                 </Routes>
                 <ChatBot />

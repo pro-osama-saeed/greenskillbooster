@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_access_logs: {
+        Row: {
+          action_type: string
+          admin_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       api_rate_limits: {
         Row: {
           called_at: string
@@ -1137,6 +1167,13 @@ export type Database = {
         Args: { lat: number; lon: number }
         Returns: Json
       }
+      assign_user_role: {
+        Args: {
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       award_early_adopter_badge: { Args: never; Returns: undefined }
       award_event_badge: {
         Args: { p_event_icon: string; p_event_name: string; p_user_id: string }
@@ -1189,6 +1226,13 @@ export type Database = {
         Returns: boolean
       }
       increment_post_views: { Args: { post_id: string }; Returns: undefined }
+      revoke_user_role: {
+        Args: {
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       search_forum_posts: {
         Args: {
           forum_filter?: string

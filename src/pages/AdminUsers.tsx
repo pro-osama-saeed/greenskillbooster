@@ -24,6 +24,7 @@ interface UserProfile {
     total_actions: number;
     total_points: number;
   };
+  user_roles?: Array<{ role: string }>;
 }
 
 export default function AdminUsers() {
@@ -35,6 +36,7 @@ export default function AdminUsers() {
   const [suspensionReason, setSuspensionReason] = useState('');
   const [suspensionDays, setSuspensionDays] = useState<string>('');
   const [processing, setProcessing] = useState(false);
+  const [roleDialog, setRoleDialog] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -43,7 +45,7 @@ export default function AdminUsers() {
   const fetchUsers = async () => {
     setLoading(true);
     
-    const { data, error } = await supabase
+    const { data: profilesData, error: profilesError } = await supabase
       .from('profiles')
       .select(`
         *,
@@ -55,13 +57,69 @@ export default function AdminUsers() {
       .order('created_at', { ascending: false })
       .limit(100);
 
-    if (error) {
+    if (profilesError) {
       toast.error('Failed to load users');
+      setLoading(false);
       return;
     }
 
-    setUsers(data || []);
+    if (profilesData && profilesData.length > 0) {
+      const userIds = profilesData.map(p => p.id);
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('user_id', userIds);
+
+      const rolesMap = new Map<string, Array<{ role: string }>>();
+      rolesData?.forEach(role => {
+        if (!rolesMap.has(role.user_id)) {
+          rolesMap.set(role.user_id, []);
+        }
+        rolesMap.get(role.user_id)?.push({ role: role.role });
+      });
+
+      const enrichedUsers = profilesData.map(profile => ({
+        ...profile,
+        user_roles: rolesMap.get(profile.id) || []
+      }));
+
+      setUsers(enrichedUsers);
+    }
+
     setLoading(false);
+  };
+
+  const handleRoleChange = async (role: 'admin' | 'co_admin' | 'moderator') => {
+    if (!selectedUser) return;
+
+    try {
+      setProcessing(true);
+      const currentRoles = selectedUser.user_roles?.map((r: any) => r.role) || [];
+      
+      if (currentRoles.includes(role)) {
+        const { error } = await supabase.rpc('revoke_user_role', {
+          p_user_id: selectedUser.id,
+          p_role: role
+        });
+        if (error) throw error;
+        toast.success(`${role} role removed`);
+      } else {
+        const { error } = await supabase.rpc('assign_user_role', {
+          p_user_id: selectedUser.id,
+          p_role: role
+        });
+        if (error) throw error;
+        toast.success(`${role} role assigned`);
+      }
+
+      setRoleDialog(false);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error changing user role:', error);
+      toast.error(error.message || 'Failed to change user role');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const suspendUser = async () => {
@@ -169,6 +227,16 @@ export default function AdminUsers() {
                 </div>
               </div>
 
+              {user.user_roles && user.user_roles.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {user.user_roles.map((r: any) => (
+                    <Badge key={r.role} variant="secondary" className="text-xs">
+                      {r.role}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
               {user.warnings_count > 0 && (
                 <Badge variant="secondary">
                   <AlertTriangle className="w-3 h-3 mr-1" />
@@ -176,9 +244,48 @@ export default function AdminUsers() {
                 </Badge>
               )}
 
-              {user.suspended ? (
-                <div className="space-y-2">
-                  <Badge variant="destructive" className="w-full justify-center">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    setSelectedUser(user);
+                    setRoleDialog(true);
+                  }}
+                >
+                  Manage Roles
+                </Button>
+                
+                {user.suspended ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => unsuspendUser(user.id)}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Unsuspend
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => {
+                      setSelectedUser(user);
+                      setSuspensionDialog(true);
+                    }}
+                  >
+                    <Ban className="w-4 h-4 mr-2" />
+                    Suspend
+                  </Button>
+                )}
+              </div>
+
+              {user.suspended && (
+                <div className="pt-2 border-t">
+                  <Badge variant="destructive" className="w-full justify-center mb-1">
                     <Ban className="w-3 h-3 mr-1" />
                     Suspended
                   </Badge>
@@ -190,29 +297,7 @@ export default function AdminUsers() {
                       Until: {new Date(user.suspended_until).toLocaleDateString()}
                     </p>
                   )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => unsuspendUser(user.id)}
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Unsuspend
-                  </Button>
                 </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => {
-                    setSelectedUser(user);
-                    setSuspensionDialog(true);
-                  }}
-                >
-                  <Ban className="w-4 h-4 mr-2" />
-                  Suspend User
-                </Button>
               )}
             </CardContent>
           </Card>
@@ -253,6 +338,61 @@ export default function AdminUsers() {
             >
               {processing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Suspend User
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={roleDialog} onOpenChange={setRoleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manage User Roles</DialogTitle>
+            <DialogDescription>
+              Select a role to assign or remove for {selectedUser?.username}
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-medium">Current roles:</p>
+                <div className="flex gap-2 flex-wrap">
+                  {selectedUser?.user_roles && selectedUser.user_roles.length > 0 ? (
+                    selectedUser.user_roles.map((r: any) => (
+                      <Badge key={r.role} variant="secondary">{r.role}</Badge>
+                    ))
+                  ) : (
+                    <span className="text-sm text-muted-foreground">No roles assigned</span>
+                  )}
+                </div>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              disabled={processing}
+              onClick={() => handleRoleChange('admin')}
+            >
+              {processing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {selectedUser?.user_roles?.some((r: any) => r.role === 'admin') ? '✓ ' : ''}
+              Admin
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              disabled={processing}
+              onClick={() => handleRoleChange('co_admin')}
+            >
+              {processing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {selectedUser?.user_roles?.some((r: any) => r.role === 'co_admin') ? '✓ ' : ''}
+              Co-Admin
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              disabled={processing}
+              onClick={() => handleRoleChange('moderator')}
+            >
+              {processing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {selectedUser?.user_roles?.some((r: any) => r.role === 'moderator') ? '✓ ' : ''}
+              Moderator
             </Button>
           </div>
         </DialogContent>

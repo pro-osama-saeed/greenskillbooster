@@ -25,52 +25,13 @@ interface Suggestion {
 
 const AdminSuggestions = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    checkAdminStatus();
-  }, [user]);
-
-  useEffect(() => {
-    if (isAdmin) {
-      loadSuggestions();
-    }
-  }, [isAdmin]);
-
-  const checkAdminStatus = async () => {
-    if (!user) {
-      toast.error("Please sign in");
-      navigate("/auth");
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .in("role", ["admin", "co_admin"]);
-
-      if (error) throw error;
-
-      if (!data || data.length === 0) {
-        toast.error("Access denied", {
-          description: "You don't have admin or co-admin privileges",
-        });
-        navigate("/lessons");
-        return;
-      }
-
-      setIsAdmin(true);
-    } catch (error) {
-      console.error("Error checking admin status:", error);
-      navigate("/lessons");
-    }
-  };
+    loadSuggestions();
+  }, []);
 
   const loadSuggestions = async () => {
     try {
