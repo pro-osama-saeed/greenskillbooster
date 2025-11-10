@@ -53,14 +53,13 @@ const AdminSuggestions = () => {
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
+        .in("role", ["admin", "co_admin"]);
 
       if (error) throw error;
 
-      if (!data) {
+      if (!data || data.length === 0) {
         toast.error("Access denied", {
-          description: "You don't have admin privileges",
+          description: "You don't have admin or co-admin privileges",
         });
         navigate("/lessons");
         return;

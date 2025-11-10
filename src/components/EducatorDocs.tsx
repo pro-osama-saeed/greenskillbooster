@@ -239,13 +239,6 @@ export const EducatorDocs = () => {
               </div>
             </div>
           </div>
-          
-
-          <Button onClick={downloadLessonPlanPDF} className="w-full gap-2">
-  <Download className="w-4 h-4" />
-  Download Full Lesson Plan Templates
-</Button>
-
         </CardContent>
       </Card>
       </div>

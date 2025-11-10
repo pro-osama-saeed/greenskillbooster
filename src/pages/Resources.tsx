@@ -27,24 +27,6 @@ const Resources = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Video className="h-6 w-6 text-primary" />
-                Demo Video
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center mb-4">
-                <p className="text-muted-foreground">Demo video placeholder</p>
-              </div>
-              <p className="text-muted-foreground">
-                Watch our platform demo to see how GreenSkill Booster helps learners 
-                acquire essential climate skills through gamified micro-learning.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
                 <Github className="h-6 w-6 text-foreground" />
                 Open Source
               </CardTitle>
@@ -55,7 +37,11 @@ const Resources = () => {
                 collaboration. Check out our code repository, contribute improvements, or 
                 fork the project to create your own educational platform.
               </p>
-              <Button variant="outline" className="gap-2">
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                onClick={() => window.open('https://github.com/pro-osama-saeed/greenskillbooster', '_blank')}
+              >
                 <Github className="h-4 w-4" />
                 View on GitHub
                 <ExternalLink className="h-4 w-4" />
@@ -145,18 +131,7 @@ const Resources = () => {
                   </p>
                 </a>
                 <a 
-                  href="https://www.climatejobs.com/" 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block p-4 rounded-lg border hover:bg-muted transition-colors"
-                >
-                  <h4 className="font-semibold text-foreground">Green Jobs Portal</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Find climate-related job opportunities and training programs worldwide
-                  </p>
-                </a>
-                <a 
-                  href="https://drawdown.org/" 
+                  href="https://drawdown.org/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block p-4 rounded-lg border hover:bg-muted transition-colors"

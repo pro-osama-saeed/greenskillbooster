@@ -22,7 +22,7 @@ export const ChatBot: React.FC = () => {
     }
   }, []);
 
-  if (!user) return null;
+  // Chatbot is now accessible to everyone, signed in or not
 
   return (
     <>

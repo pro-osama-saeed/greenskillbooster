@@ -43,10 +43,9 @@ export const Header = () => {
           .from("user_roles")
           .select("role")
           .eq("user_id", user.id)
-          .eq("role", "admin")
-          .maybeSingle();
+          .in("role", ["admin", "co_admin"]);
 
-        setIsAdmin(!!data);
+        setIsAdmin(data && data.length > 0);
       } catch (error) {
         console.error("Error checking admin status:", error);
         setIsAdmin(false);
