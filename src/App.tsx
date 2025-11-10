@@ -28,6 +28,9 @@ import Teams from "./pages/Teams";
 import Forums from "./pages/Forums";
 import ForumPost from "./pages/ForumPost";
 import UserProfile from "./pages/UserProfile";
+import AdminModeration from "./pages/AdminModeration";
+import AdminUsers from "./pages/AdminUsers";
+import AdminAnalytics from "./pages/AdminAnalytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -63,7 +66,10 @@ const App = () => (
             <Route path="/forums" element={<Forums />} />
             <Route path="/forums/:forumId/posts/:postId" element={<ForumPost />} />
             <Route path="/profile/:userId" element={<UserProfile />} />
-                  <Route path="*" element={<NotFound />} />
+            <Route path="/admin/moderation" element={<AdminModeration />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            <Route path="*" element={<NotFound />} />
                 </Routes>
                 <ChatBot />
               </BrowserRouter>

@@ -9,6 +9,7 @@ import { Loader2, MessageSquare, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import ReactionBar from './ReactionBar';
+import ReportButton from './ReportButton';
 
 interface Comment {
   id: string;
@@ -187,7 +188,10 @@ export default function CommentSection({ parentType, parentId }: CommentSectionP
                       )}
                     </div>
                     <p className="text-sm mb-2">{comment.content}</p>
-                    <ReactionBar parentType="comment" parentId={comment.id} size="sm" />
+                    <div className="flex items-center justify-between">
+                      <ReactionBar parentType="comment" parentId={comment.id} size="sm" />
+                      <ReportButton reportedType="comment" reportedId={comment.id} variant="ghost" size="sm" />
+                    </div>
                   </div>
                 </div>
               </div>

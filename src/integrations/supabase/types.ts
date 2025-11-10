@@ -65,6 +65,13 @@ export type Database = {
             referencedRelation: "forum_posts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bookmarks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       chat_conversations: {
@@ -463,6 +470,45 @@ export type Database = {
         }
         Relationships: []
       }
+      moderation_actions: {
+        Row: {
+          action_type: string
+          created_at: string
+          duration_days: number | null
+          expires_at: string | null
+          id: string
+          moderator_id: string
+          notes: string | null
+          reason: string
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          duration_days?: number | null
+          expires_at?: string | null
+          id?: string
+          moderator_id: string
+          notes?: string | null
+          reason: string
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          duration_days?: number | null
+          expires_at?: string | null
+          id?: string
+          moderator_id?: string
+          notes?: string | null
+          reason?: string
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -578,9 +624,11 @@ export type Database = {
           is_public: boolean | null
           profile_visibility: string | null
           suspended: boolean | null
+          suspended_until: string | null
           suspension_reason: string | null
           updated_at: string | null
           username: string
+          warnings_count: number | null
         }
         Insert: {
           avatar_url?: string | null
@@ -589,9 +637,11 @@ export type Database = {
           is_public?: boolean | null
           profile_visibility?: string | null
           suspended?: boolean | null
+          suspended_until?: string | null
           suspension_reason?: string | null
           updated_at?: string | null
           username: string
+          warnings_count?: number | null
         }
         Update: {
           avatar_url?: string | null
@@ -600,9 +650,11 @@ export type Database = {
           is_public?: boolean | null
           profile_visibility?: string | null
           suspended?: boolean | null
+          suspended_until?: string | null
           suspension_reason?: string | null
           updated_at?: string | null
           username?: string
+          warnings_count?: number | null
         }
         Relationships: []
       }
@@ -632,6 +684,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          reason: string
+          reported_id: string
+          reported_type: string
+          reporter_id: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason: string
+          reported_id: string
+          reported_type: string
+          reporter_id: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason?: string
+          reported_id?: string
+          reported_type?: string
+          reporter_id?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tags: {
         Row: {
@@ -909,6 +1014,8 @@ export type Database = {
         Returns: undefined
       }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
+      get_admin_stats: { Args: never; Returns: Json }
+      get_content_stats: { Args: { days?: number }; Returns: Json }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
@@ -955,6 +1062,19 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      suspend_user: {
+        Args: {
+          p_duration_days?: number
+          p_moderator_id?: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      unsuspend_user: {
+        Args: { p_moderator_id?: string; p_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {

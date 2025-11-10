@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import CommentSection from '@/components/CommentSection';
 import ReactionBar from '@/components/ReactionBar';
+import ReportButton from '@/components/ReportButton';
 
 interface ForumPost {
   id: string;
@@ -167,7 +168,11 @@ export default function ForumPost() {
             className="prose prose-sm max-w-none mb-4"
             dangerouslySetInnerHTML={{ __html: post.content_html || post.content }}
           />
-          <ReactionBar parentType="forum_post" parentId={post.id} />
+          
+          <div className="flex items-center justify-between border-t pt-4">
+            <ReactionBar parentType="forum_post" parentId={post.id} />
+            <ReportButton reportedType="post" reportedId={post.id} />
+          </div>
         </CardContent>
       </Card>
 
