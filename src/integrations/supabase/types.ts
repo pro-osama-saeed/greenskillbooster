@@ -282,6 +282,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_public: boolean | null
+          profile_visibility: string | null
           suspended: boolean | null
           suspension_reason: string | null
           updated_at: string | null
@@ -292,6 +293,7 @@ export type Database = {
           created_at?: string | null
           id: string
           is_public?: boolean | null
+          profile_visibility?: string | null
           suspended?: boolean | null
           suspension_reason?: string | null
           updated_at?: string | null
@@ -302,6 +304,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_public?: boolean | null
+          profile_visibility?: string | null
           suspended?: boolean | null
           suspension_reason?: string | null
           updated_at?: string | null
@@ -409,6 +412,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      anonymize_coordinates: {
+        Args: { lat: number; lon: number }
+        Returns: Json
+      }
       award_early_adopter_badge: { Args: never; Returns: undefined }
       award_event_badge: {
         Args: { p_event_icon: string; p_event_name: string; p_user_id: string }
