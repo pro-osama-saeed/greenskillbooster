@@ -11,6 +11,7 @@ import { Loader2, ArrowLeft, MapPin, Calendar, Award, Flame, Target } from 'luci
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { EditProfileDialog } from '@/components/EditProfileDialog';
+import { ChangePasswordDialog } from '@/components/ChangePasswordDialog';
 
 interface UserProfile {
   id: string;
@@ -143,10 +144,13 @@ export default function UserProfile() {
                 <div className="flex items-center justify-between mb-2">
                   <h1 className="text-3xl font-bold">{profile.username}</h1>
                   {isOwnProfile && (
-                    <EditProfileDialog 
-                      currentProfile={profile}
-                      onProfileUpdated={fetchUserData}
-                    />
+                    <div className="flex gap-2">
+                      <EditProfileDialog 
+                        currentProfile={profile}
+                        onProfileUpdated={fetchUserData}
+                      />
+                      <ChangePasswordDialog />
+                    </div>
                   )}
                 </div>
                 <div className="flex items-center gap-4 text-muted-foreground mb-4">
