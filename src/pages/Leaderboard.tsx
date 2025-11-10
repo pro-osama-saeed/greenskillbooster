@@ -58,10 +58,12 @@ const Leaderboard = () => {
             .select('*', { count: 'exact', head: true })
             .eq('user_id', entry.user_id);
 
+          const profiles = Array.isArray(entry.profiles) ? entry.profiles[0] : entry.profiles;
+
           return {
             user_id: entry.user_id,
-            username: entry.profiles?.username || 'Anonymous',
-            avatar_url: entry.profiles?.avatar_url || null,
+            username: profiles?.username || 'Anonymous',
+            avatar_url: profiles?.avatar_url ?? null,
             total_points: entry.total_points || 0,
             total_actions: entry.total_actions || 0,
             achievement_count: count || 0,
