@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, Trophy, Zap, Target, TrendingUp, Edit, Trash2, ArrowLeft } from 'lucide-react';
 import { Header } from '@/components/Header';
+import { PrivacySettings } from '@/components/PrivacySettings';
 import { toast } from 'sonner';
 
 interface UserStats {
@@ -170,6 +171,10 @@ export default function Impact() {
             </Card>
           </div>
         )}
+
+        <div className="mb-8">
+          <PrivacySettings />
+        </div>
 
         <div className="mb-4">
           <h2 className="text-2xl font-bold">Your Actions</h2>

@@ -40,14 +40,36 @@ export default function TrackAction() {
   const { location } = useLocation();
   const [category, setCategory] = useState('');
   const [story, setStory] = useState('');
-  const [isPublic, setIsPublic] = useState(true);
+  const [isPublic, setIsPublic] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
+      return;
+    }
+    if (user) {
+      fetchUserPreferences();
     }
   }, [user, authLoading, navigate]);
+
+  const fetchUserPreferences = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_public')
+        .eq('id', user.id)
+        .single();
+
+      if (profile) {
+        setIsPublic(profile.is_public ?? false);
+      }
+    } catch (error) {
+      console.error('Error fetching user preferences:', error);
+    }
+  };
 
   // Monitor auth state changes
   useEffect(() => {
