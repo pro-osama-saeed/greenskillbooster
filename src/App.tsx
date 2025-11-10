@@ -23,6 +23,8 @@ import Auth from "./pages/Auth";
 import TrackAction from "./pages/TrackAction";
 import Community from "./pages/Community";
 import Impact from "./pages/Impact";
+import Challenges from "./pages/Challenges";
+import Teams from "./pages/Teams";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +55,8 @@ const App = () => (
                   <Route path="/track-action" element={<TrackAction />} />
                   <Route path="/community" element={<Community />} />
                   <Route path="/impact" element={<Impact />} />
+                  <Route path="/challenges" element={<Challenges />} />
+                  <Route path="/teams" element={<Teams />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
                 <ChatBot />

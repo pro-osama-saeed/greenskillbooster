@@ -153,6 +153,42 @@ export type Database = {
           },
         ]
       }
+      daily_challenges: {
+        Row: {
+          active_date: string
+          category: string
+          created_at: string
+          description: string
+          difficulty: string
+          expires_at: string
+          id: string
+          points_reward: number
+          title: string
+        }
+        Insert: {
+          active_date?: string
+          category: string
+          created_at?: string
+          description: string
+          difficulty: string
+          expires_at: string
+          id?: string
+          points_reward?: number
+          title: string
+        }
+        Update: {
+          active_date?: string
+          category?: string
+          created_at?: string
+          description?: string
+          difficulty?: string
+          expires_at?: string
+          id?: string
+          points_reward?: number
+          title?: string
+        }
+        Relationships: []
+      }
       feedback_forms: {
         Row: {
           category: string | null
@@ -276,6 +312,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          message: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message: string
+          read?: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -312,6 +381,74 @@ export type Database = {
         }
         Relationships: []
       }
+      team_members: {
+        Row: {
+          id: string
+          joined_at: string
+          role: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          role?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          role?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_public: boolean
+          max_members: number
+          name: string
+          total_points: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          max_members?: number
+          name: string
+          total_points?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          max_members?: number
+          name?: string
+          total_points?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement_description: string | null
@@ -344,6 +481,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_challenge_completions: {
+        Row: {
+          challenge_id: string
+          completed_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_challenge_completions_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "daily_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -435,6 +601,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      send_notification: {
+        Args: {
+          p_data?: Json
+          p_message: string
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: string
       }
     }
     Enums: {

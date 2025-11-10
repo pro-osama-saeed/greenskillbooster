@@ -25,6 +25,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { NotificationsCenter } from "./NotificationsCenter";
 
 export const Header = () => {
   const { language, setLanguage, t } = useLanguage();
@@ -71,6 +72,12 @@ export const Header = () => {
       </Link>
       <Link to="/leaderboard">
         <Button variant="ghost">{t("leaderboard")}</Button>
+      </Link>
+      <Link to="/challenges">
+        <Button variant="ghost">Challenges</Button>
+      </Link>
+      <Link to="/teams">
+        <Button variant="ghost">Teams</Button>
       </Link>
       <Link to="/about">
         <Button variant="ghost">{t("about")}</Button>
@@ -138,6 +145,7 @@ export const Header = () => {
 
           {user ? (
             <div className="hidden md:flex items-center gap-2">
+              <NotificationsCenter />
               <Link to="/impact">
                 <Button variant="ghost" size="icon">
                   <User className="h-5 w-5" />

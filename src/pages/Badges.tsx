@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { generateCertificate } from "@/components/CertificateGenerator";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { LoadingCard } from "@/components/LoadingCard";
+import { SocialShare } from "@/components/SocialShare";
 
 interface Achievement {
   id: string;
@@ -174,11 +175,23 @@ const Badges = () => {
       <Header />
       <main className="container py-8">
         <div className="space-y-8">
-          <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">{t("badges")}</h1>
-            <p className="text-muted-foreground text-lg">
-              Your achievements, milestones, and certificates
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold text-foreground mb-2">{t("badges")}</h1>
+              <p className="text-muted-foreground text-lg">
+                Your achievements, milestones, and certificates
+              </p>
+            </div>
+            
+            <div className="flex gap-2">
+              {achievements.length > 0 && (
+                <SocialShare
+                  title={`I've earned ${achievements.length} badges on GreenSkill Booster!`}
+                  description={`Join me in taking climate action and earning achievements.`}
+                  hashtags={['ClimateAction', 'GreenSkills', 'Sustainability']}
+                />
+              )}
+            </div>
           </div>
 
           {/* Stats Overview */}
