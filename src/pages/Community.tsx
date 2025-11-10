@@ -1,14 +1,18 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, MapPin, Volume2, Filter } from 'lucide-react';
 import { Header } from '@/components/Header';
+import { formatDistanceToNow } from 'date-fns';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import CommentSection from '@/components/CommentSection';
+import ReactionBar from '@/components/ReactionBar';
 
 interface ClimateAction {
   id: string;
@@ -22,6 +26,7 @@ interface ClimateAction {
   longitude: number | null;
   created_at: string;
   profiles: {
+    id: string;
     username: string;
     avatar_url: string | null;
   };
@@ -83,11 +88,9 @@ export default function Community() {
     }
   }, [mapToken, actions, selectedCategories]);
 
-  // Generate unique color for each user based on user_id
   const getUserColor = (userId: string): string => {
     if (userColors[userId]) return userColors[userId];
     
-    // Generate color from user_id hash
     let hash = 0;
     for (let i = 0; i < userId.length; i++) {
       hash = userId.charCodeAt(i) + ((hash << 5) - hash);
@@ -125,6 +128,7 @@ export default function Community() {
         .select(`
           *,
           profiles:user_id (
+            id,
             username,
             avatar_url
           )
@@ -145,18 +149,16 @@ export default function Community() {
   const updateMarkers = () => {
     if (!map.current) return;
 
-    // Clear existing markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
 
-    // Add filtered markers
     const filteredActions = actions.filter(action => 
       selectedCategories.includes(action.category)
     );
 
     filteredActions.forEach((action) => {
       if (action.latitude && action.longitude && map.current) {
-        const userColor = getUserColor(action.profiles.username);
+        const userColor = getUserColor(action.profiles.id);
         
         const el = document.createElement('div');
         el.className = 'marker';
@@ -285,54 +287,78 @@ export default function Community() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {actions.filter(action => selectedCategories.includes(action.category)).map((action) => (
-            <Card key={action.id} className="overflow-hidden">
-              {action.photo_url && (
-                <img
-                  src={action.photo_url}
-                  alt="Action"
-                  className="w-full h-48 object-cover"
-                />
-              )}
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={action.profiles.avatar_url || undefined} />
-                    <AvatarFallback>
-                      {action.profiles.username[0].toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="font-semibold">{action.profiles.username}</p>
-                    {action.city && action.country && (
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {action.city}, {action.country}
-                      </p>
-                    )}
+            <Card key={action.id}>
+              <CardHeader>
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar 
+                      className="cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                      onClick={() => window.location.href = `/profile/${action.profiles.id}`}
+                    >
+                      <AvatarImage src={action.profiles.avatar_url || undefined} />
+                      <AvatarFallback>
+                        {action.profiles.username[0]?.toUpperCase() || '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div 
+                        className="font-medium cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => window.location.href = `/profile/${action.profiles.id}`}
+                      >
+                        {action.profiles.username}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {formatDistanceToNow(new Date(action.created_at), { addSuffix: true })}
+                      </div>
+                    </div>
                   </div>
+                  <Badge 
+                    style={{ 
+                      backgroundColor: `${userColors[action.profiles.id] || '#666'}20`,
+                      borderColor: userColors[action.profiles.id] || '#666',
+                      color: userColors[action.profiles.id] || '#666'
+                    }}
+                    className="border"
+                  >
+                    {action.category.replace('_', ' ')}
+                  </Badge>
                 </div>
-
-                <Badge variant="secondary">
-                  {CATEGORY_LABELS[action.category]}
-                </Badge>
-
-                {action.story && (
-                  <p className="text-sm text-muted-foreground">{action.story}</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm">{action.story}</p>
+                
+                {action.photo_url && (
+                  <img 
+                    src={action.photo_url} 
+                    alt="Climate action" 
+                    className="w-full h-64 object-cover rounded-lg"
+                  />
                 )}
 
                 {action.voice_note_url && (
-                  <button
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
                     onClick={() => playAudio(action.voice_note_url!)}
-                    className="flex items-center gap-2 text-sm text-primary hover:underline"
                   >
-                    <Volume2 className="w-4 h-4" />
-                    Play voice note
-                  </button>
+                    <Volume2 className="w-4 h-4 mr-2" />
+                    Play Voice Note
+                  </Button>
                 )}
 
-                <p className="text-xs text-muted-foreground">
-                  {new Date(action.created_at).toLocaleDateString()}
-                </p>
+                {(action.city || action.country) && (
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
+                    <MapPin className="w-4 h-4" />
+                    {[action.city, action.country].filter(Boolean).join(', ')}
+                  </div>
+                )}
+                
+                <ReactionBar parentType="climate_action" parentId={action.id} />
+                
+                <div className="pt-4 border-t">
+                  <CommentSection parentType="climate_action" parentId={action.id} />
+                </div>
               </CardContent>
             </Card>
           ))}

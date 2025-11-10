@@ -79,6 +79,9 @@ export const Header = () => {
       <Link to="/teams">
         <Button variant="ghost">Teams</Button>
       </Link>
+      <Link to="/forums">
+        <Button variant="ghost">Forums</Button>
+      </Link>
       <Link to="/about">
         <Button variant="ghost">{t("about")}</Button>
       </Link>

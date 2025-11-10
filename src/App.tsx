@@ -25,6 +25,9 @@ import Community from "./pages/Community";
 import Impact from "./pages/Impact";
 import Challenges from "./pages/Challenges";
 import Teams from "./pages/Teams";
+import Forums from "./pages/Forums";
+import ForumPost from "./pages/ForumPost";
+import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
