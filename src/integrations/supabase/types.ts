@@ -38,6 +38,35 @@ export type Database = {
         }
         Relationships: []
       }
+      bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "forum_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_conversations: {
         Row: {
           created_at: string
@@ -266,32 +295,41 @@ export type Database = {
       forum_posts: {
         Row: {
           content: string
+          content_html: string | null
           created_at: string
           forum_id: string
           id: string
+          is_pinned: boolean | null
           title: string
           updated_at: string
           user_id: string
+          view_count: number | null
           views: number
         }
         Insert: {
           content: string
+          content_html?: string | null
           created_at?: string
           forum_id: string
           id?: string
+          is_pinned?: boolean | null
           title: string
           updated_at?: string
           user_id: string
+          view_count?: number | null
           views?: number
         }
         Update: {
           content?: string
+          content_html?: string | null
           created_at?: string
           forum_id?: string
           id?: string
+          is_pinned?: boolean | null
           title?: string
           updated_at?: string
           user_id?: string
+          view_count?: number | null
           views?: number
         }
         Relationships: [
@@ -458,6 +496,80 @@ export type Database = {
         }
         Relationships: []
       }
+      post_media: {
+        Row: {
+          caption: string | null
+          created_at: string
+          display_order: number
+          id: string
+          media_type: string
+          media_url: string
+          post_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          media_type: string
+          media_url: string
+          post_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          media_type?: string
+          media_url?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_media_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "forum_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_tags: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_tags_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "forum_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -518,6 +630,33 @@ export type Database = {
           parent_type?: string
           reaction_type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
         }
         Relationships: []
       }
@@ -785,6 +924,28 @@ export type Database = {
         Returns: boolean
       }
       increment_post_views: { Args: { post_id: string }; Returns: undefined }
+      search_forum_posts: {
+        Args: {
+          forum_filter?: string
+          search_query: string
+          tag_filter?: string
+        }
+        Returns: {
+          avatar_url: string
+          comment_count: number
+          content: string
+          content_html: string
+          created_at: string
+          forum_id: string
+          id: string
+          is_pinned: boolean
+          relevance: number
+          title: string
+          user_id: string
+          username: string
+          views: number
+        }[]
+      }
       send_notification: {
         Args: {
           p_data?: Json

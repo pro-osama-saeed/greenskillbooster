@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, ArrowLeft, Eye, Clock } from 'lucide-react';
 import { toast } from 'sonner';
@@ -15,13 +16,17 @@ interface ForumPost {
   id: string;
   title: string;
   content: string;
+  content_html: string;
   views: number;
   created_at: string;
   user_id: string;
+  is_pinned: boolean;
   profiles: {
     username: string;
     avatar_url: string;
   };
+  tags?: Array<{ id: string; name: string; color: string }>;
+  media?: Array<{ url: string; caption?: string }>;
 }
 
 export default function ForumPost() {
@@ -57,7 +62,24 @@ export default function ForumPost() {
       return;
     }
 
-    setPost(data);
+    // Get tags
+    const { data: postTags } = await supabase
+      .from('post_tags')
+      .select('tags(id, name, color)')
+      .eq('post_id', postId);
+
+    // Get media
+    const { data: postMedia } = await supabase
+      .from('post_media')
+      .select('media_url, caption')
+      .eq('post_id', postId)
+      .order('display_order');
+
+    setPost({
+      ...data,
+      tags: postTags?.map(pt => (pt.tags as any)) || [],
+      media: postMedia?.map(m => ({ url: m.media_url, caption: m.caption || undefined })) || []
+    });
     setLoading(false);
   };
 
@@ -105,13 +127,46 @@ export default function ForumPost() {
                 </div>
               </div>
             </div>
+            {post.is_pinned && (
+              <Badge variant="default">Pinned</Badge>
+            )}
           </div>
           <CardTitle className="text-2xl">{post.title}</CardTitle>
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex gap-2 flex-wrap mt-3">
+              {post.tags.map((tag) => (
+                <Badge 
+                  key={tag.id} 
+                  style={{ backgroundColor: tag.color, color: 'white' }}
+                >
+                  {tag.name}
+                </Badge>
+              ))}
+            </div>
+          )}
         </CardHeader>
         <CardContent>
-          <div className="prose prose-sm max-w-none mb-4">
-            <p className="whitespace-pre-wrap">{post.content}</p>
-          </div>
+          {post.media && post.media.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {post.media.map((item, idx) => (
+                <div key={idx} className="space-y-2">
+                  <img
+                    src={item.url}
+                    alt={item.caption || `Media ${idx + 1}`}
+                    className="w-full h-64 object-cover rounded-lg"
+                  />
+                  {item.caption && (
+                    <p className="text-sm text-muted-foreground italic">{item.caption}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <div 
+            className="prose prose-sm max-w-none mb-4"
+            dangerouslySetInnerHTML={{ __html: post.content_html || post.content }}
+          />
           <ReactionBar parentType="forum_post" parentId={post.id} />
         </CardContent>
       </Card>
